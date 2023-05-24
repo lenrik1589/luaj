@@ -43,8 +43,8 @@ public class Str {
 
 	public static LuaString longString(String image) {
 		int i = image.indexOf('[', image.indexOf('[')+1)+1;
-		String s = image.substring(i, image.length()-i);
-		byte[] b = s.getBytes(StandardCharsets.UTF_8);
+		String[] s = image.substring(i, image.length()-i).split("^\\r?\\n?", 2);
+		byte[] b = s[s.length - 1].getBytes(StandardCharsets.UTF_8);
 		return LuaString.valueUsing(b);
 	}
 
