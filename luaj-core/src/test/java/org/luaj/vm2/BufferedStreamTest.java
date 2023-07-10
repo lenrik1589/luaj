@@ -21,12 +21,12 @@
  ******************************************************************************/
 package org.luaj.vm2;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
+import org.luaj.vm2.Globals.BufferedStream;
 
 import java.io.ByteArrayInputStream;
 
-import org.junit.jupiter.api.Test;
-import org.luaj.vm2.Globals.BufferedStream;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class BufferedStreamTest {
 

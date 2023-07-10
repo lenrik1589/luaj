@@ -25,8 +25,7 @@
 */
 
 options {
-  STATIC = false;
-  JDK_VERSION = "1.3";
+  JDK_VERSION = "1.8";
   ERROR_REPORTING = true;
   UNICODE_INPUT = true;
   DEBUG_LOOKAHEAD = false;
@@ -67,7 +66,7 @@ public class LuaParser {
   	return jj_input_stream;
   }
   
-  private long LineInfo() {
+  private long getLineInfo() {
   	return ((long) jj_input_stream.getBeginLine() << 32) | jj_input_stream.getBeginColumn();
   }
 
@@ -86,7 +85,6 @@ public class LuaParser {
   }
   
 }
-
 PARSER_END(LuaParser)
 
 /* WHITE SPACE */
@@ -193,7 +191,7 @@ Chunk Chunk():
 {
 	Block b;
 	Chunk c;
-	long i = LineInfo();
+	long i = getLineInfo();
 }
 {
 	( "#" { token_source.SwitchTo(IN_COMMENT); } )? b=Block() <EOF> { c=new Chunk(b); L(c,i); return c; }
@@ -203,7 +201,7 @@ Block Block():
 {
 	Block b = new Block();
 	Stat s;
-	long i = LineInfo();
+	long i = getLineInfo();
 }
 {
 	(s=Stat() {b.add(s);} )* (s=ReturnStat() {b.add(s);} )? { L(b,i); return b; } 
@@ -219,7 +217,7 @@ Stat Stat():
 	Token n;
 	List<Name> nl;
 	List<Exp> el=null;
-	long i = LineInfo();
+	long i = getLineInfo();
 }
 {
 	";" { return null; }
@@ -262,7 +260,7 @@ Stat ReturnStat():
 {
 	List<Exp> el=null;
 	Stat s;
-	long i = LineInfo();
+	long i = getLineInfo();
 }
 {
 	<RETURN> ( el=ExpList() )? ( ";" )? { s=Stat.returnstat(el); L(s,i); return s; }
@@ -280,7 +278,7 @@ Stat ExprStat():
 {
 	Exp.PrimaryExp p;
 	Stat s=null;
-	long i = LineInfo();
+	long i = getLineInfo();
 }
 {
 	p=PrimaryExp() ( s=Assign(assertvarexp(p)) )?
@@ -294,7 +292,7 @@ Stat Assign(Exp.VarExp v0):
 	Exp.VarExp ve;
 	List<Exp> el;
 	Stat s;
-	long i = LineInfo();
+	long i = getLineInfo();
 }
 {
 	( "," ve=VarExp() { vl.add(ve); } )* "=" el=ExpList() { s=Stat.assignment(vl,el); L(s,i); return s; }
@@ -325,7 +323,7 @@ Exp.PrimaryExp PrefixExp():
 	Token n;
 	Exp e;
 	Exp.PrimaryExp p;
-	long i = LineInfo();
+	long i = getLineInfo();
 }
 {
 	n=<NAME>			{ p=Exp.nameprefix(n.image); L(p,i); return p; }
@@ -335,7 +333,7 @@ Exp.PrimaryExp PrefixExp():
 Exp.PrimaryExp PrimaryExp(): 
 {	
 	Exp.PrimaryExp p;
-	long i = LineInfo();
+	long i = getLineInfo();
 }
 {
 	p=PrefixExp() ( LOOKAHEAD(2) p=PostfixOp(p) )* { L(p,i); return p; }
@@ -347,7 +345,7 @@ Exp.PrimaryExp PostfixOp(Exp.PrimaryExp lhs):
 	Exp e;
 	FuncArgs a;
 	Exp.PrimaryExp p;
-	long i = LineInfo();
+	long i = getLineInfo();
 }
 {
 	"." n=<NAME>				{ p=Exp.fieldop(lhs, n.image); L(p,i); return p; } 
@@ -362,7 +360,7 @@ FuncArgs FuncArgs():
 	TableConstructor tc;
 	LuaString s;
 	FuncArgs a;
-	long i = LineInfo();
+	long i = getLineInfo();
 }
 {
 	"(" ( el=ExpList() )? ")"	{ a=FuncArgs.explist(el); L(a,i); return a; }
@@ -395,7 +393,7 @@ Exp SimpleExp():
 	Exp e;
 	TableConstructor c;
 	FuncBody b;
-	long i = LineInfo();
+	long i = getLineInfo();
 }
 {
 	<NIL>					{ e=Exp.constant(LuaValue.NIL); L(e,i); return e; } 		
@@ -425,7 +423,7 @@ Exp Exp():
 {
 	Exp e,s;
 	int op;
-	long i = LineInfo();
+	long i = getLineInfo();
 }
 {
 	( e=SimpleExp() | op=Unop() s=Exp() {e=Exp.unaryexp(op,s);}) 
@@ -435,7 +433,7 @@ Exp Exp():
 FuncBody FunctionCall():
 {
 	FuncBody b;
-	long i = LineInfo();
+	long i = getLineInfo();
 }
 {
 	<FUNCTION> b=FuncBody() { L(b,i); return b; }
@@ -446,7 +444,7 @@ FuncBody FuncBody():
 	ParList pl=null;
 	Block b;
 	FuncBody f;
-	long i = LineInfo();
+	long i = getLineInfo();
 }
 {
 	"(" ( pl=ParList() )? ")" b=Block() <END> { f=new FuncBody(pl,b); L(f,i); return f; }
@@ -457,7 +455,7 @@ ParList ParList():
 	List<Name> l=null;
 	boolean v=false;
 	ParList p;
-	long i = LineInfo();
+	long i = getLineInfo();
 }
 {
 	l=NameList() ( "," "..." { v=true; } )? { p=new ParList(l,v); L(p,i); return p; } 
@@ -468,7 +466,7 @@ TableConstructor TableConstructor():
 {
 	TableConstructor c = new TableConstructor();
 	List<TableField> l = null;
-	long i = LineInfo();
+	long i = getLineInfo();
 }
 {
 	"{" ( l=FieldList() {c.fields=l;} )? "}" { L(c,i); return c; }
@@ -488,7 +486,7 @@ TableField Field():
 	Token name;
 	Exp exp,rhs;
 	TableField f;
-	long i = LineInfo();
+	long i = getLineInfo();
 }
 {
 	"[" exp=Exp() "]" "=" rhs=Exp()         { f=TableField.keyedField(exp,rhs); L(f,i); return f; }

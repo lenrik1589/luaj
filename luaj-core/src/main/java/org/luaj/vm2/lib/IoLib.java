@@ -21,15 +21,11 @@
 ******************************************************************************/
 package org.luaj.vm2.lib;
 
+import org.luaj.vm2.*;
+
 import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
-
-import org.luaj.vm2.Globals;
-import org.luaj.vm2.LuaString;
-import org.luaj.vm2.LuaTable;
-import org.luaj.vm2.LuaValue;
-import org.luaj.vm2.Varargs;
 
 /**
  * Abstract base class extending {@link LibFunction} which implements the core

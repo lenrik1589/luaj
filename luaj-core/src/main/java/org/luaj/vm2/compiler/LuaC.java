@@ -21,17 +21,12 @@
 ******************************************************************************/
 package org.luaj.vm2.compiler;
 
+import org.luaj.vm2.*;
+import org.luaj.vm2.lib.BaseLib;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Hashtable;
-
-import org.luaj.vm2.Globals;
-import org.luaj.vm2.LuaClosure;
-import org.luaj.vm2.LuaFunction;
-import org.luaj.vm2.LuaString;
-import org.luaj.vm2.LuaValue;
-import org.luaj.vm2.Prototype;
-import org.luaj.vm2.lib.BaseLib;
 
 /**
  * Compiler for Lua.

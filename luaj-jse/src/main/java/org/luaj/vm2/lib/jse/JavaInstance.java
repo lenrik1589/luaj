@@ -21,11 +21,11 @@
 ******************************************************************************/
 package org.luaj.vm2.lib.jse;
 
-import java.lang.reflect.Field;
-
 import org.luaj.vm2.LuaError;
 import org.luaj.vm2.LuaUserdata;
 import org.luaj.vm2.LuaValue;
+
+import java.lang.reflect.Field;
 
 /**
  * LuaValue that represents a Java instance.

@@ -21,14 +21,14 @@
  ******************************************************************************/
 package org.luaj.vm2.server;
 
-import java.io.InputStream;
-import java.io.Reader;
-
 import org.luaj.vm2.Globals;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.Varargs;
 import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import org.luaj.vm2.lib.jse.JsePlatform;
+
+import java.io.InputStream;
+import java.io.Reader;
 
 /**
  * Default {@link Launcher} instance that creates standard globals and runs the
@@ -41,8 +41,8 @@ import org.luaj.vm2.lib.jse.JsePlatform;
  *
  * @see Launcher
  * @see LuajClassLoader
- * @see LuajClassLoader#NewLauncher()
- * @see LuajClassLoader#NewLauncher(Class)
+ * @see LuajClassLoader#newLauncher()
+ * @see LuajClassLoader#newLauncher(Class)
  * @since luaj 3.0.1
  */
 public class DefaultLauncher implements Launcher {

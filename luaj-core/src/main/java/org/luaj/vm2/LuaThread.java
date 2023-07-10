@@ -21,6 +21,8 @@
 ******************************************************************************/
 package org.luaj.vm2;
 
+import org.luaj.vm2.lib.DebugLib;
+
 import java.lang.ref.WeakReference;
 
 /**
@@ -96,7 +98,7 @@ public class LuaThread extends LuaValue {
 	 * Thread-local used by DebugLib to store debugging state. This is an opaque
 	 * value that should not be modified by applications.
 	 */
-	public Object callstack;
+	public DebugLib.CallStack callstack;
 
 	public final Globals globals;
 

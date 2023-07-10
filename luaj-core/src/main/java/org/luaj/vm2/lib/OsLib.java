@@ -21,19 +21,11 @@
 ******************************************************************************/
 package org.luaj.vm2.lib;
 
+import org.luaj.vm2.*;
+
 import java.io.IOException;
 import java.time.format.TextStyle;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-
-import org.luaj.vm2.Buffer;
-import org.luaj.vm2.Globals;
-import org.luaj.vm2.LuaTable;
-import org.luaj.vm2.LuaValue;
-import org.luaj.vm2.Varargs;
+import java.util.*;
 
 /**
  * Subclass of {@link LibFunction} which implements the standard lua {@code os}
@@ -174,7 +166,7 @@ public class OsLib extends TwoArgFunction {
 						tbl.set("min", LuaValue.valueOf(d.get(Calendar.MINUTE)));
 						tbl.set("sec", LuaValue.valueOf(d.get(Calendar.SECOND)));
 						tbl.set("wday", LuaValue.valueOf(d.get(Calendar.DAY_OF_WEEK)));
-						tbl.set("yday", LuaValue.valueOf(d.get(0x6))); // Day of year
+						tbl.set("yday", LuaValue.valueOf(d.get(Calendar.DAY_OF_YEAR)));
 						tbl.set("isdst", LuaValue.valueOf(isDaylightSavingsTime(d)));
 						return tbl;
 					}
@@ -343,10 +335,7 @@ public class OsLib extends TwoArgFunction {
 		CONVERTERS.put("Y", d -> String.valueOf(d.get(Calendar.YEAR)));
 		CONVERTERS.put("z", d -> {
 			final int tzo = timeZoneOffset(d)/60;
-			final int a = Math.abs(tzo);
-			final String h = String.valueOf(100+a/60).substring(1);
-			final String m = String.valueOf(100+a%60).substring(1);
-			return (tzo >= 0? "+": "-")+h+m;
+			return "%+03d%02d".formatted(tzo / 60, Math.abs(tzo % 60));
 		});
 		CONVERTERS.put("Z", d -> d.getTimeZone().toZoneId().getDisplayName(TextStyle.SHORT, Locale.getDefault()));
 	}
@@ -382,7 +371,7 @@ public class OsLib extends TwoArgFunction {
 	}
 
 	private boolean isDaylightSavingsTime(Calendar d) {
-		return timeZoneOffset(d) != d.getTimeZone().getRawOffset()/1000;
+		return d.getTimeZone().useDaylightTime();
 	}
 
 	/**

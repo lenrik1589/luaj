@@ -1,15 +1,15 @@
 package org.luaj;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import org.luaj.vm2.Print;
+import org.luaj.vm2.Prototype;
+import org.luaj.vm2.compiler.DumpState;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
-import org.luaj.vm2.Print;
-import org.luaj.vm2.Prototype;
-import org.luaj.vm2.compiler.DumpState;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 abstract class CompilingTestCase extends ResourcesTestCase {
 

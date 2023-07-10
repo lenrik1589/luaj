@@ -21,26 +21,21 @@
 * THE SOFTWARE.
 ******************************************************************************/
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import org.luaj.vm2.Globals;
+import org.luaj.vm2.Lua;
+import org.luaj.vm2.lib.jse.JsePlatform;
+
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
 
-import org.luaj.vm2.Globals;
-import org.luaj.vm2.Lua;
-import org.luaj.vm2.lib.jse.JsePlatform;
-import org.luaj.vm2.luajc.LuaJC;
-
 /**
  * Compiler for lua files to compile lua sources or lua binaries into java
  * classes.
  */
-public class luajc {
+public class LuaJC {
 	private static final String version = Lua._VERSION + " Copyright (C) 2012 luaj.org";
 
 	private static final String usage = "usage: java -cp luaj-jse.jar,bcel-5.2.jar luajc [options] fileordir [, fileordir ...]\n"
@@ -67,10 +62,10 @@ public class luajc {
 	private final Globals globals;
 
 	public static void main(String[] args) throws IOException {
-		new luajc(args);
+		new LuaJC(args);
 	}
 
-	private luajc(String[] args) throws IOException {
+	private LuaJC(String[] args) throws IOException {
 
 		// process args
 		List seeds = new ArrayList();
@@ -222,9 +217,9 @@ public class luajc {
 			// create the chunk
 			FileInputStream fis = new FileInputStream(inf.infile);
 			final Hashtable t = encoding != null
-				? LuaJC.instance.compileAll(new InputStreamReader(fis, encoding), inf.luachunkname, inf.srcfilename,
+				? org.luaj.vm2.luajc.LuaJC.instance.compileAll(new InputStreamReader(fis, encoding), inf.luachunkname, inf.srcfilename,
 					globals, genmain)
-				: LuaJC.instance.compileAll(fis, inf.luachunkname, inf.srcfilename, globals, genmain);
+				: org.luaj.vm2.luajc.LuaJC.instance.compileAll(fis, inf.luachunkname, inf.srcfilename, globals, genmain);
 			fis.close();
 
 			// write out the chunk

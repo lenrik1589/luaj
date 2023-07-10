@@ -21,8 +21,6 @@
 ******************************************************************************/
 package org.luaj.vm2.lib;
 
-import java.util.Random;
-
 import org.luaj.vm2.LuaDouble;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
@@ -124,28 +122,28 @@ public class MathLib extends TwoArgFunction {
 	@Override
 	public LuaValue call(LuaValue modname, LuaValue env) {
 		LuaTable math = new LuaTable(0, 30);
-		math.set("abs", new abs());
-		math.set("ceil", new ceil());
-		math.set("cos", new cos());
-		math.set("deg", new deg());
-		math.set("exp", new exp(this));
-		math.set("floor", new floor());
-		math.set("fmod", new fmod());
-		math.set("frexp", new frexp());
+		math.set("abs", new Abs());
+		math.set("ceil", new Ceil());
+		math.set("cos", new Cos());
+		math.set("deg", new Deg());
+		math.set("exp", new Exp(this));
+		math.set("floor", new Floor());
+		math.set("fmod", new Fmod());
+		math.set("frexp", new Frexp());
 		math.set("huge", LuaDouble.POSINF);
-		math.set("ldexp", new ldexp());
-		math.set("max", new max());
-		math.set("min", new min());
-		math.set("modf", new modf());
+		math.set("ldexp", new Ldexp());
+		math.set("max", new Max());
+		math.set("min", new Min());
+		math.set("modf", new Modf());
 		math.set("pi", Math.PI);
-		math.set("pow", new pow());
-		random r;
-		math.set("random", r = new random());
-		math.set("randomseed", new randomseed(r));
-		math.set("rad", new rad());
-		math.set("sin", new sin());
-		math.set("sqrt", new sqrt());
-		math.set("tan", new tan());
+		math.set("pow", new Pow());
+		Random r;
+		math.set("random", r = new Random());
+		math.set("randomseed", new Randomseed(r));
+		math.set("rad", new Rad());
+		math.set("sin", new Sin());
+		math.set("sqrt", new Sqrt());
+		math.set("tan", new Tan());
 		env.set("math", math);
 		if (!env.get("package").isnil())
 			env.get("package").get("loaded").set("math", math);
@@ -170,55 +168,55 @@ public class MathLib extends TwoArgFunction {
 		abstract protected double call(double x, double y);
 	}
 
-	static final class abs extends UnaryOp {
+	static final class Abs extends UnaryOp {
 		@Override
 		protected double call(double d) { return Math.abs(d); }
 	}
 
-	static final class ceil extends UnaryOp {
+	static final class Ceil extends UnaryOp {
 		@Override
 		protected double call(double d) { return Math.ceil(d); }
 	}
 
-	static final class cos extends UnaryOp {
+	static final class Cos extends UnaryOp {
 		@Override
 		protected double call(double d) { return Math.cos(d); }
 	}
 
-	static final class deg extends UnaryOp {
+	static final class Deg extends UnaryOp {
 		@Override
 		protected double call(double d) { return Math.toDegrees(d); }
 	}
 
-	static final class floor extends UnaryOp {
+	static final class Floor extends UnaryOp {
 		@Override
 		protected double call(double d) { return Math.floor(d); }
 	}
 
-	static final class rad extends UnaryOp {
+	static final class Rad extends UnaryOp {
 		@Override
 		protected double call(double d) { return Math.toRadians(d); }
 	}
 
-	static final class sin extends UnaryOp {
+	static final class Sin extends UnaryOp {
 		@Override
 		protected double call(double d) { return Math.sin(d); }
 	}
 
-	static final class sqrt extends UnaryOp {
+	static final class Sqrt extends UnaryOp {
 		@Override
 		protected double call(double d) { return Math.sqrt(d); }
 	}
 
-	static final class tan extends UnaryOp {
+	static final class Tan extends UnaryOp {
 		@Override
 		protected double call(double d) { return Math.tan(d); }
 	}
 
-	static final class exp extends UnaryOp {
+	static final class Exp extends UnaryOp {
 		final MathLib mathlib;
 
-		exp(MathLib mathlib) {
+		Exp(MathLib mathlib) {
 			this.mathlib = mathlib;
 		}
 
@@ -228,7 +226,7 @@ public class MathLib extends TwoArgFunction {
 		}
 	}
 
-	static final class fmod extends TwoArgFunction {
+	static final class Fmod extends TwoArgFunction {
 		@Override
 		public LuaValue call(LuaValue xv, LuaValue yv) {
 			if (yv.checkdouble() == 0.0d)
@@ -240,7 +238,7 @@ public class MathLib extends TwoArgFunction {
 		}
 	}
 
-	static final class ldexp extends BinaryOp {
+	static final class Ldexp extends BinaryOp {
 		@Override
 		protected double call(double x, double y) {
 			// This is the behavior on os-x, windows differs in rounding behavior.
@@ -248,14 +246,14 @@ public class MathLib extends TwoArgFunction {
 		}
 	}
 
-	static final class pow extends BinaryOp {
+	static final class Pow extends BinaryOp {
 		@Override
 		protected double call(double x, double y) {
 			return MathLib.dpow_default(x, y);
 		}
 	}
 
-	static class frexp extends VarArgFunction {
+	static class Frexp extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			double x = args.checkdouble(1);
@@ -268,7 +266,7 @@ public class MathLib extends TwoArgFunction {
 		}
 	}
 
-	static class max extends VarArgFunction {
+	static class Max extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			LuaValue m = args.checknumber(1);
@@ -281,7 +279,7 @@ public class MathLib extends TwoArgFunction {
 		}
 	}
 
-	static class min extends VarArgFunction {
+	static class Min extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			LuaValue m = args.checknumber(1);
@@ -294,7 +292,7 @@ public class MathLib extends TwoArgFunction {
 		}
 	}
 
-	static class modf extends VarArgFunction {
+	static class Modf extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			LuaValue n = args.arg1();
@@ -310,8 +308,8 @@ public class MathLib extends TwoArgFunction {
 		}
 	}
 
-	static class random extends LibFunction {
-		Random random = new Random();
+	static class Random extends LibFunction {
+		java.util.Random random = new java.util.Random();
 
 		@Override
 		public LuaValue call() {
@@ -337,17 +335,17 @@ public class MathLib extends TwoArgFunction {
 
 	}
 
-	static class randomseed extends OneArgFunction {
-		final random random;
+	static class Randomseed extends OneArgFunction {
+		final Random random;
 
-		randomseed(random random) {
+		Randomseed(Random random) {
 			this.random = random;
 		}
 
 		@Override
 		public LuaValue call(LuaValue arg) {
 			long seed = arg.checklong();
-			random.random = new Random(seed);
+			random.random = new java.util.Random(seed);
 			return NONE;
 		}
 	}

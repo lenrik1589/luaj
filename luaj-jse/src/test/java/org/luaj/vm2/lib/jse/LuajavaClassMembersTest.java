@@ -1,14 +1,10 @@
 package org.luaj.vm2.lib.jse;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-
 import org.junit.jupiter.api.Test;
 import org.luaj.vm2.LuaError;
 import org.luaj.vm2.LuaValue;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class LuajavaClassMembersTest {
 	public static class A {

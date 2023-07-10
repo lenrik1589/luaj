@@ -21,18 +21,14 @@
  ******************************************************************************/
 package org.luaj.luajc;
 
+import org.luaj.vm2.*;
+import org.luaj.vm2.lib.jse.JsePlatform;
+import org.luaj.vm2.luajc.LuaJC;
+
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.Hashtable;
-
-import org.luaj.vm2.Globals;
-import org.luaj.vm2.LuaValue;
-import org.luaj.vm2.Print;
-import org.luaj.vm2.Prototype;
-import org.luaj.vm2.Varargs;
-import org.luaj.vm2.lib.jse.JsePlatform;
-import org.luaj.vm2.luajc.LuaJC;
 
 public class TestLuaJC {
 	// This file will be loaded using the finder as a resource, provided it is in the 

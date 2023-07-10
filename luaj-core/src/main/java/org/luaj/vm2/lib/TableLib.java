@@ -80,12 +80,12 @@ public class TableLib extends TwoArgFunction {
 	@Override
 	public LuaValue call(LuaValue modname, LuaValue env) {
 		LuaTable table = new LuaTable();
-		table.set("concat", new concat());
-		table.set("insert", new insert());
-		table.set("pack", new pack());
-		table.set("remove", new remove());
-		table.set("sort", new sort());
-		table.set("unpack", new unpack());
+		table.set("concat", new Concat());
+		table.set("insert", new Insert());
+		table.set("pack", new Pack());
+		table.set("remove", new Remove());
+		table.set("sort", new Sort());
+		table.set("unpack", new Unpack());
 		env.set("table", table);
 		if (!env.get("package").isnil())
 			env.get("package").get("loaded").set("table", table);
@@ -93,7 +93,7 @@ public class TableLib extends TwoArgFunction {
 	}
 
 	// "concat" (table [, sep [, i [, j]]]) -> string
-	static class concat extends TableLibFunction {
+	static class Concat extends TableLibFunction {
 		@Override
 		public LuaValue call(LuaValue list) {
 			return list.checktable().concat(EMPTYSTRING, 1, list.length());
@@ -116,7 +116,7 @@ public class TableLib extends TwoArgFunction {
 	}
 
 	// "insert" (table, [pos,] value)
-	static class insert extends VarArgFunction {
+	static class Insert extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			switch (args.narg()) {
@@ -142,7 +142,7 @@ public class TableLib extends TwoArgFunction {
 	}
 
 	// "pack" (...) -> table
-	static class pack extends VarArgFunction {
+	static class Pack extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			LuaValue t = tableOf(args, 1);
@@ -152,7 +152,7 @@ public class TableLib extends TwoArgFunction {
 	}
 
 	// "remove" (table [, pos]) -> removed-ele
-	static class remove extends VarArgFunction {
+	static class Remove extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			LuaTable table = args.checktable(1);
@@ -166,7 +166,7 @@ public class TableLib extends TwoArgFunction {
 	}
 
 	// "sort" (table [, comp])
-	static class sort extends VarArgFunction {
+	static class Sort extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			args.checktable(1).sort(args.isnil(2)? NIL: args.checkfunction(2));
@@ -175,7 +175,7 @@ public class TableLib extends TwoArgFunction {
 	}
 
 	// "unpack", // (list [,i [,j]]) -> result1, ...
-	static class unpack extends VarArgFunction {
+	static class Unpack extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			LuaTable t = args.checktable(1);

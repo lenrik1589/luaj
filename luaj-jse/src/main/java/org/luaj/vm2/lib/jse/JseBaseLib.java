@@ -21,17 +21,13 @@
 ******************************************************************************/
 package org.luaj.vm2.lib.jse;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-
 import org.luaj.vm2.Globals;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.BaseLib;
 import org.luaj.vm2.lib.LibFunction;
 import org.luaj.vm2.lib.ResourceFinder;
+
+import java.io.*;
 
 /**
  * Subclass of {@link BaseLib} and {@link LibFunction} which implements the lua

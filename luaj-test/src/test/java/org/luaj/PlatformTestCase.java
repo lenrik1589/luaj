@@ -21,18 +21,6 @@
  ******************************************************************************/
 package org.luaj;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintStream;
-import java.nio.file.Files;
-import java.nio.file.OpenOption;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.luaj.vm2.Globals;
 import org.luaj.vm2.LuaValue;
@@ -40,6 +28,13 @@ import org.luaj.vm2.lib.jme.JmePlatform;
 import org.luaj.vm2.lib.jse.JsePlatform;
 import org.luaj.vm2.lib.jse.JseProcess;
 import org.luaj.vm2.luajc.LuaJC;
+
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 abstract class PlatformTestCase extends ResourcesTestCase {
 	public static final boolean nocompile = "true".equals(System.getProperty("nocompile"));

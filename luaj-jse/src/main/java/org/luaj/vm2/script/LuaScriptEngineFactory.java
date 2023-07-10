@@ -21,11 +21,10 @@
 ******************************************************************************/
 package org.luaj.vm2.script;
 
-import java.util.Arrays;
-import java.util.List;
-
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Jsr 223 scripting engine factory.

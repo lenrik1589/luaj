@@ -1,11 +1,11 @@
 package org.luaj.vm2.lib.jse;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.junit.jupiter.api.Test;
 import org.luaj.vm2.Globals;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.Varargs;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class JsePlatformTest {
 	@Test

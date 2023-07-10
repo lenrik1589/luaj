@@ -22,7 +22,7 @@ import org.luaj.vm2.lib.TwoArgFunction;
  * as a java call with no arguments.  This invocation should be used to initialize
  * the library, and add any values to globals that are desired.
  */
-public class hyperbolic extends TwoArgFunction {
+public class Hyperbolic extends TwoArgFunction {
 
 	/** Public constructor.  To be loaded via require(), the library class 
 	 * must have a public constructor.
@@ -38,8 +38,8 @@ public class hyperbolic extends TwoArgFunction {
 	 */
 	public LuaValue call(LuaValue modname, LuaValue env) {
 		LuaValue library = tableOf();
-		library.set( "sinh", new sinh() );
-		library.set( "cosh", new cosh() );
+		library.set( "sinh", new Sinh() );
+		library.set( "cosh", new Cosh() );
 		env.set( "hyperbolic", library );
 		return library;
 	}
@@ -50,14 +50,14 @@ public class hyperbolic extends TwoArgFunction {
 	* to match what the implementation expects.  */
 	
 	/** Mathematical sinh function provided as a OneArgFunction.  */
-	static class sinh extends OneArgFunction {
+	static class Sinh extends OneArgFunction {
 		public LuaValue call(LuaValue x) {
 			return LuaValue.valueOf(Math.sinh(x.checkdouble()));
 		}
 	}
 	
 	/** Mathematical cosh function provided as a OneArgFunction.  */
-	static class cosh extends OneArgFunction {
+	static class Cosh extends OneArgFunction {
 		public LuaValue call(LuaValue x) {
 			return LuaValue.valueOf(Math.cosh(x.checkdouble()));
 		}

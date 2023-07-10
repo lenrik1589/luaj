@@ -21,8 +21,6 @@
  ******************************************************************************/
 package org.luaj.vm2;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,6 +29,8 @@ import org.luaj.vm2.lib.StringLib;
 import org.luaj.vm2.lib.ThreeArgFunction;
 import org.luaj.vm2.lib.TwoArgFunction;
 import org.luaj.vm2.lib.ZeroArgFunction;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class MetatableTest {
 

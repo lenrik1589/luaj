@@ -21,12 +21,6 @@
  ******************************************************************************/
 package org.luaj.jse;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-
-import java.lang.ref.WeakReference;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,6 +30,10 @@ import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.Varargs;
 import org.luaj.vm2.lib.OneArgFunction;
 import org.luaj.vm2.lib.jse.JsePlatform;
+
+import java.lang.ref.WeakReference;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class OrphanedThreadTest {
 

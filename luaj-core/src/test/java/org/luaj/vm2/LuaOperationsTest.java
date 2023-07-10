@@ -21,14 +21,14 @@
  ******************************************************************************/
 package org.luaj.vm2;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
-
-import java.lang.reflect.InvocationTargetException;
-
 import org.junit.jupiter.api.Test;
 import org.luaj.vm2.TypeTest.MyData;
 import org.luaj.vm2.lib.ZeroArgFunction;
+
+import java.lang.reflect.InvocationTargetException;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class LuaOperationsTest {
 

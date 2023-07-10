@@ -21,18 +21,8 @@
  ******************************************************************************/
 package org.luaj;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.luaj.vm2.LuaBoolean;
-import org.luaj.vm2.LuaFunction;
-import org.luaj.vm2.LuaNil;
-import org.luaj.vm2.LuaNumber;
-import org.luaj.vm2.LuaString;
-import org.luaj.vm2.LuaThread;
-import org.luaj.vm2.LuaValue;
+import org.junit.jupiter.api.*;
+import org.luaj.vm2.*;
 import org.luaj.vm2.luajc.LuaJC;
 
 /**

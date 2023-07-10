@@ -1,14 +1,14 @@
 package org.luaj.vm2.script;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.luaj.vm2.LuaValue;
 
 import javax.script.Compilable;
 import javax.script.CompiledScript;
 import javax.script.ScriptException;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.luaj.vm2.LuaValue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class CompileNonClosureTest extends DefaultBindingsTestCase {
 	@BeforeEach

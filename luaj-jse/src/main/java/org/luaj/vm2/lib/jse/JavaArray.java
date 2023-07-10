@@ -21,12 +21,12 @@
 ******************************************************************************/
 package org.luaj.vm2.lib.jse;
 
-import java.lang.reflect.Array;
-
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaUserdata;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.OneArgFunction;
+
+import java.lang.reflect.Array;
 
 /**
  * LuaValue that represents a Java instance of array type.

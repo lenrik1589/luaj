@@ -21,116 +21,114 @@
 ******************************************************************************/
 package org.luaj.vm2.luajc;
 
+import org.apache.bcel.Const;
+import org.apache.bcel.generic.*;
+import org.luaj.vm2.*;
+import org.luaj.vm2.lib.*;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.bcel.Constants;
-import org.apache.bcel.generic.AASTORE;
-import org.apache.bcel.generic.ALOAD;
-import org.apache.bcel.generic.ANEWARRAY;
-import org.apache.bcel.generic.ASTORE;
-import org.apache.bcel.generic.ArrayType;
-import org.apache.bcel.generic.BranchInstruction;
-import org.apache.bcel.generic.ClassGen;
-import org.apache.bcel.generic.CompoundInstruction;
-import org.apache.bcel.generic.ConstantPoolGen;
-import org.apache.bcel.generic.FieldGen;
-import org.apache.bcel.generic.GOTO;
-import org.apache.bcel.generic.IFEQ;
-import org.apache.bcel.generic.IFNE;
-import org.apache.bcel.generic.Instruction;
-import org.apache.bcel.generic.InstructionConstants;
-import org.apache.bcel.generic.InstructionFactory;
-import org.apache.bcel.generic.InstructionHandle;
-import org.apache.bcel.generic.InstructionList;
-import org.apache.bcel.generic.LocalVariableGen;
-import org.apache.bcel.generic.MethodGen;
-import org.apache.bcel.generic.ObjectType;
-import org.apache.bcel.generic.PUSH;
-import org.apache.bcel.generic.Type;
-import org.luaj.vm2.Buffer;
-import org.luaj.vm2.Lua;
-import org.luaj.vm2.LuaBoolean;
-import org.luaj.vm2.LuaInteger;
-import org.luaj.vm2.LuaNumber;
-import org.luaj.vm2.LuaString;
-import org.luaj.vm2.LuaTable;
-import org.luaj.vm2.LuaValue;
-import org.luaj.vm2.Prototype;
-import org.luaj.vm2.Varargs;
-import org.luaj.vm2.lib.OneArgFunction;
-import org.luaj.vm2.lib.ThreeArgFunction;
-import org.luaj.vm2.lib.TwoArgFunction;
-import org.luaj.vm2.lib.VarArgFunction;
-import org.luaj.vm2.lib.ZeroArgFunction;
-
 public class JavaBuilder {
 
-	private static final String STR_VARARGS     = Varargs.class.getName();
-	private static final String STR_LUAVALUE    = LuaValue.class.getName();
-	private static final String STR_LUASTRING   = LuaString.class.getName();
-	private static final String STR_LUAINTEGER  = LuaInteger.class.getName();
-	private static final String STR_LUANUMBER   = LuaNumber.class.getName();
-	private static final String STR_LUABOOLEAN  = LuaBoolean.class.getName();
-	private static final String STR_LUATABLE    = LuaTable.class.getName();
-	private static final String STR_BUFFER      = Buffer.class.getName();
-	private static final String STR_STRING      = String.class.getName();
-	private static final String STR_JSEPLATFORM = "org.luaj.vm2.lib.jse.JsePlatform";
+	private enum Types {
+		CHAR        (Type.CHAR),
+		INT         (Type.INT),
+		DOUBLE      (Type.DOUBLE),
+		STRING      (String.class),
+		BUFFER      (Buffer.class),
+		VARARGS     (Varargs.class),
+		LUAVALUE    (LuaValue.class),
+		LUASTRING   (LuaString.class),
+		LUAINTEGER  (LuaInteger.class),
+		LUANUMBER   (LuaNumber.class),
+		LUABOOLEAN  (LuaBoolean.class),
+		LUATABLE    (LuaTable.class),
+		FUNCV       (VarArgFunction.class),
+		FUNC0       (ZeroArgFunction.class),
+		FUNC1       (OneArgFunction.class),
+		FUNC2       (TwoArgFunction.class),
+		FUNC3       (ThreeArgFunction.class),
+		JSEPLATFORM ("org.luaj.vm2.lib.jse.JsePlatform"),
+		;
+		private final String name;
+		private final ObjectType object;
+		private final BasicType basic;
+		private final ArrayType array;
+		Types(Class<?> klass) {
+			this(klass.getName());
+		}
 
-	private static final ObjectType TYPE_VARARGS    = new ObjectType(STR_VARARGS);
-	private static final ObjectType TYPE_LUAVALUE   = new ObjectType(STR_LUAVALUE);
-	private static final ObjectType TYPE_LUASTRING  = new ObjectType(STR_LUASTRING);
-	private static final ObjectType TYPE_LUAINTEGER = new ObjectType(STR_LUAINTEGER);
-	private static final ObjectType TYPE_LUANUMBER  = new ObjectType(STR_LUANUMBER);
-	private static final ObjectType TYPE_LUABOOLEAN = new ObjectType(STR_LUABOOLEAN);
-	private static final ObjectType TYPE_LUATABLE   = new ObjectType(STR_LUATABLE);
-	private static final ObjectType TYPE_BUFFER     = new ObjectType(STR_BUFFER);
-	private static final ObjectType TYPE_STRING     = new ObjectType(STR_STRING);
+		Types(String className){
+			this.name = className;
+			this.object = new ObjectType(name);
+			this.array = new ArrayType(object, 1);
+			this.basic = null;
+		}
 
-	private static final ArrayType TYPE_LOCALUPVALUE = new ArrayType(TYPE_LUAVALUE, 1);
-	private static final ArrayType TYPE_CHARARRAY    = new ArrayType(Type.CHAR, 1);
-	private static final ArrayType TYPE_STRINGARRAY  = new ArrayType(TYPE_STRING, 1);
-
-	private static final String STR_FUNCV = VarArgFunction.class.getName();
-	private static final String STR_FUNC0 = ZeroArgFunction.class.getName();
-	private static final String STR_FUNC1 = OneArgFunction.class.getName();
-	private static final String STR_FUNC2 = TwoArgFunction.class.getName();
-	private static final String STR_FUNC3 = ThreeArgFunction.class.getName();
+		Types(BasicType type) {
+			this.name = type.getSignature();
+			this.basic = type;
+			this.array = new ArrayType(type, 1);
+			this.object = null;
+		}
+	}
 
 	// argument list types
-	private static final Type[] ARG_TYPES_NONE                       = {};
-	private static final Type[] ARG_TYPES_INT                        = { Type.INT };
-	private static final Type[] ARG_TYPES_DOUBLE                     = { Type.DOUBLE };
-	private static final Type[] ARG_TYPES_STRING                     = { Type.STRING };
-	private static final Type[] ARG_TYPES_CHARARRAY                  = { TYPE_CHARARRAY };
-	private static final Type[] ARG_TYPES_INT_LUAVALUE               = { Type.INT, TYPE_LUAVALUE };
-	private static final Type[] ARG_TYPES_INT_VARARGS                = { Type.INT, TYPE_VARARGS };
-	private static final Type[] ARG_TYPES_LUAVALUE_VARARGS           = { TYPE_LUAVALUE, TYPE_VARARGS };
-	private static final Type[] ARG_TYPES_LUAVALUE_LUAVALUE_VARARGS  = { TYPE_LUAVALUE, TYPE_LUAVALUE, TYPE_VARARGS };
-	private static final Type[] ARG_TYPES_LUAVALUEARRAY              = { new ArrayType(TYPE_LUAVALUE, 1) };
-	private static final Type[] ARG_TYPES_LUAVALUEARRAY_VARARGS      = { new ArrayType(TYPE_LUAVALUE, 1),
-			TYPE_VARARGS };
-	private static final Type[] ARG_TYPES_LUAVALUE_LUAVALUE_LUAVALUE = { TYPE_LUAVALUE, TYPE_LUAVALUE, TYPE_LUAVALUE };
-	private static final Type[] ARG_TYPES_VARARGS                    = { TYPE_VARARGS };
-	private static final Type[] ARG_TYPES_LUAVALUE_LUAVALUE          = { TYPE_LUAVALUE, TYPE_LUAVALUE };
-	private static final Type[] ARG_TYPES_INT_INT                    = { Type.INT, Type.INT };
-	private static final Type[] ARG_TYPES_LUAVALUE                   = { TYPE_LUAVALUE };
-	private static final Type[] ARG_TYPES_BUFFER                     = { TYPE_BUFFER };
-	private static final Type[] ARG_TYPES_STRINGARRAY                = { TYPE_STRINGARRAY };
-	private static final Type[] ARG_TYPES_LUAVALUE_STRINGARRAY       = { TYPE_LUAVALUE, TYPE_STRINGARRAY };
+	private enum ArgTypes {
+		NONE                  (new Type[]{ }                                                                    , new String[]{ }),
+		INT                   (new Type[]{ Types.INT.basic }                                                    , new String[]{ "i" }),
+		DOUBLE                (new Type[]{ Types.DOUBLE.basic }                                                 , new String[]{ "d" }),
+		STRING                (new Type[]{ Types.STRING.basic }                                                 , new String[]{ "s" }),
+		CHARARRAY             (new Type[]{ Types.CHAR.array }                                                   , new String[]{ "chars" }),
+		BUFFER                (new Type[]{ Types.BUFFER.object }                                                , new String[]{ "buffer" }),
+		STRINGARRAY           (new Type[]{ Types.STRING.array }                                                 , new String[]{ "strings" }),
+		LUAVALUE_STRINGARRAY  (new Type[]{ Types.LUAVALUE.object, Types.STRING.array }                          , new String[]{ "arg", "strings" }),
+		VARARGS               (new Type[]{ Types.VARARGS.object }                                               , new String[]{ "args" }),
+		LUAVALUE              (new Type[]{ Types.LUAVALUE.object }                                              , new String[]{ "arg" }),
+		LUAVALUE_VARARGS      (new Type[]{ Types.LUAVALUE.object, Types.VARARGS.object }                        , new String[]{ "arg1", "args"}),
+		LUAVALUE_2            (new Type[]{ Types.LUAVALUE.object, Types.LUAVALUE.object }                       , new String[]{ "arg1", "arg2" }),
+		LUAVALUE_2_VARARGS    (new Type[]{ Types.LUAVALUE.object, Types.LUAVALUE.object, Types.VARARGS.object } , new String[]{ "arg1", "arg2", "args" }),
+		LUAVALUE_3            (new Type[]{ Types.LUAVALUE.object, Types.LUAVALUE.object, Types.LUAVALUE.object }, new String[]{ "arg1", "arg2", "arg3" }),
+		LUAVALUEARRAY         (new Type[]{ Types.LUAVALUE.array }                                               , new String[]{ "values" }),
+		LUAVALUEARRAY_VARARGS (new Type[]{ Types.LUAVALUE.array, Types.VARARGS.object }                         , new String[]{ "values", "args" }),
+		INT_LUAVALUE          (new Type[]{ Type.INT, Types.LUAVALUE.object }                                    , new String[]{ "i", "arg" }),
+		INT_VARARGS           (new Type[]{ Type.INT, Types.VARARGS.object }                                     , new String[]{ "i", "args" }),
+		INT_INT               (new Type[]{ Type.INT, Type.INT }                                                 , new String[]{ "i", "j" }),
+		;
+		private final Type[] types;
+		private final String[] defaultNames;
+
+		ArgTypes(Type[] types, String[] defaultNames) {
+			this.types = types;
+			this.defaultNames = defaultNames;
+		}
+	}
 
 	// names, arg types for main prototype classes
-	private static final String[]     SUPER_NAME_N  = { STR_FUNC0, STR_FUNC1, STR_FUNC2, STR_FUNC3, STR_FUNCV, };
-	private static final ObjectType[] RETURN_TYPE_N = { TYPE_LUAVALUE, TYPE_LUAVALUE, TYPE_LUAVALUE, TYPE_LUAVALUE,
-			TYPE_VARARGS, };
-	private static final Type[][]     ARG_TYPES_N   = { ARG_TYPES_NONE, ARG_TYPES_LUAVALUE, ARG_TYPES_LUAVALUE_LUAVALUE,
-			ARG_TYPES_LUAVALUE_LUAVALUE_LUAVALUE, ARG_TYPES_VARARGS, };
-	private static final String[][]   ARG_NAMES_N   = { {}, { "arg" }, { "arg1", "arg2" }, { "arg1", "arg2", "arg3" },
-			{ "args" }, };
-	private static final String[]     METH_NAME_N   = { "call", "call", "call", "call", "onInvoke", };
+	private enum MainPrototype {
+		Func0(Types.FUNC0.name, Types.LUAVALUE.object, ArgTypes.NONE,       "call"    ),
+		Func1(Types.FUNC1.name, Types.LUAVALUE.object, ArgTypes.LUAVALUE,   "call"    ),
+		Func2(Types.FUNC2.name, Types.LUAVALUE.object, ArgTypes.LUAVALUE_2, "call"    ),
+		Func3(Types.FUNC3.name, Types.LUAVALUE.object, ArgTypes.LUAVALUE_3, "call"    ),
+		FuncV(Types.FUNCV.name, Types.VARARGS.object,  ArgTypes.VARARGS,    "onInvoke"),
+		;
+		public final String superClassName;
+		public final ObjectType returnType;
+		public final Type[] argTypes;
+		public final String[] argNames;
+		public final String implName;
 
+		MainPrototype(String superClassName, ObjectType returnType, ArgTypes args, String implName) {
+			this.superClassName = superClassName;
+			this.returnType = returnType;
+			this.argTypes = args.types;
+			this.argNames = args.defaultNames;
+			this.implName = implName;
+		}
+	}
 	// varable naming
 	private static final String PREFIX_CONSTANT     = "k";
 	private static final String PREFIX_UPVALUE      = "u";
@@ -173,7 +171,7 @@ public class JavaBuilder {
 		this.p = pi.prototype;
 		this.classname = classname;
 
-		// what class to inherit from
+		// which class to inherit from
 		superclassType = p.numparams;
 		if (p.is_vararg != 0 || superclassType >= SUPERTYPE_VARARGS)
 			superclassType = SUPERTYPE_VARARGS;
@@ -185,9 +183,10 @@ public class JavaBuilder {
 			}
 		}
 
+		MainPrototype prototype = MainPrototype.values()[superclassType];
+		
 		// create class generator
-		cg = new ClassGen(classname, SUPER_NAME_N[superclassType], filename, Constants.ACC_PUBLIC | Constants.ACC_SUPER,
-			null);
+		cg = new ClassGen(classname, prototype.superClassName, filename, Const.ACC_PUBLIC | Const.ACC_SUPER, null);
 		cp = cg.getConstantPool(); // cg creates constant pool
 
 		// main instruction lists
@@ -198,18 +197,21 @@ public class JavaBuilder {
 		// create the fields
 		for (int i = 0; i < p.upvalues.length; i++) {
 			boolean isrw = pi.isReadWriteUpvalue(pi.upvals[i]);
-			Type uptype = isrw? (Type) TYPE_LOCALUPVALUE: (Type) TYPE_LUAVALUE;
+			Type uptype = isrw? Types.LUAVALUE.array : Types.LUAVALUE.object;
 			FieldGen fg = new FieldGen(0, uptype, upvalueName(i), cp);
 			cg.addField(fg.getField());
 		}
 
 		// create the method
-		mg = new MethodGen(Constants.ACC_PUBLIC | Constants.ACC_FINAL, // access flags
-			RETURN_TYPE_N[superclassType], // return type
-			ARG_TYPES_N[superclassType], // argument types
-			ARG_NAMES_N[superclassType], // arg names
-			METH_NAME_N[superclassType], STR_LUAVALUE, // method, defining class
-			main, cp);
+		mg = new MethodGen(
+				Const.ACC_PUBLIC | Const.ACC_FINAL, // access flags
+				prototype.returnType, // return type
+				prototype.argTypes, // argument types
+				prototype.argNames, // arg names
+				prototype.implName, // method
+				Types.LUAVALUE.name, // defining class
+				main, cp
+		);
 
 		// initialize the values in the slots
 		initializeSlots();
@@ -230,14 +232,13 @@ public class JavaBuilder {
 				if (pi.isInitialValueUsed(slot)) {
 					append(new ALOAD(1));
 					append(new PUSH(cp, slot+1));
-					append(factory.createInvoke(STR_VARARGS, "arg", TYPE_LUAVALUE, ARG_TYPES_INT,
-						Constants.INVOKEVIRTUAL));
+					append(factory.createInvoke(Types.VARARGS.name, "arg", Types.LUAVALUE.object, ArgTypes.INT.types, Const.INVOKEVIRTUAL));
 					storeLocal(-1, slot);
 				}
 			}
 			append(new ALOAD(1));
 			append(new PUSH(cp, 1+p.numparams));
-			append(factory.createInvoke(STR_VARARGS, "subargs", TYPE_VARARGS, ARG_TYPES_INT, Constants.INVOKEVIRTUAL));
+			append(factory.createInvoke(Types.VARARGS.name, "subargs", Types.VARARGS.object, ArgTypes.INT.types, Const.INVOKEVIRTUAL));
 			append(new ASTORE(1));
 		} else {
 			// fixed arg function between 0 and 3 arguments
@@ -264,16 +265,16 @@ public class JavaBuilder {
 
 		// add class initializer
 		if (!init.isEmpty()) {
-			MethodGen mg = new MethodGen(Constants.ACC_STATIC, Type.VOID, ARG_TYPES_NONE, new String[] {}, "<clinit>",
+			MethodGen mg = new MethodGen(Const.ACC_STATIC, Type.VOID, ArgTypes.NONE.types, new String[] {}, "<clinit>",
 				cg.getClassName(), init, cg.getConstantPool());
-			init.append(InstructionConstants.RETURN);
+			init.append(InstructionConst.RETURN);
 			mg.setMaxStack();
 			cg.addMethod(mg.getMethod());
 			init.dispose();
 		}
 
 		// add default constructor
-		cg.addEmptyConstructor(Constants.ACC_PUBLIC);
+		cg.addEmptyConstructor(Const.ACC_PUBLIC);
 
 		// gen method
 		resolveBranches();
@@ -283,23 +284,23 @@ public class JavaBuilder {
 
 		// add initupvalue1(LuaValue env) to initialize environment for main chunk
 		if (p.upvalues.length == 1 && superclassType == SUPERTYPE_VARARGS) {
-			MethodGen mg = new MethodGen(Constants.ACC_PUBLIC | Constants.ACC_FINAL, // access flags
+			MethodGen mg = new MethodGen(Const.ACC_PUBLIC | Const.ACC_FINAL, // access flags
 				Type.VOID, // return type
-				ARG_TYPES_LUAVALUE, // argument types
+				ArgTypes.LUAVALUE.types, // argument types
 				new String[] { "env" }, // arg names
-				"initupvalue1", STR_LUAVALUE, // method, defining class
+				"initupvalue1", Types.LUAVALUE.name, // method, defining class
 				main, cp);
 			boolean isrw = pi.isReadWriteUpvalue(pi.upvals[0]);
-			append(InstructionConstants.THIS);
+			append(InstructionConst.THIS);
 			append(new ALOAD(1));
 			if (isrw) {
-				append(factory.createInvoke(classname, "newupl", TYPE_LOCALUPVALUE, ARG_TYPES_LUAVALUE,
-					Constants.INVOKESTATIC));
-				append(factory.createFieldAccess(classname, upvalueName(0), TYPE_LOCALUPVALUE, Constants.PUTFIELD));
+				append(factory.createInvoke(classname, "newupl", Types.LUAVALUE.array, ArgTypes.LUAVALUE.types,
+					Const.INVOKESTATIC));
+				append(factory.createFieldAccess(classname, upvalueName(0), Types.LUAVALUE.array, Const.PUTFIELD));
 			} else {
-				append(factory.createFieldAccess(classname, upvalueName(0), TYPE_LUAVALUE, Constants.PUTFIELD));
+				append(factory.createFieldAccess(classname, upvalueName(0), Types.LUAVALUE.object, Const.PUTFIELD));
 			}
-			append(InstructionConstants.RETURN);
+			append(InstructionConst.RETURN);
 			mg.setMaxStack();
 			cg.addMethod(mg.getMethod());
 			main.dispose();
@@ -307,20 +308,20 @@ public class JavaBuilder {
 
 		// add main function so class is invokable from the java command line
 		if (genmain) {
-			MethodGen mg = new MethodGen(Constants.ACC_PUBLIC | Constants.ACC_STATIC, // access flags
-				Type.VOID, // return type
-				ARG_TYPES_STRINGARRAY, // argument types
-				new String[] { "arg" }, // arg names
-				"main", classname, // method, defining class
-				main, cp);
+			MethodGen mg = new MethodGen(
+					Const.ACC_PUBLIC | Const.ACC_STATIC, // access flags
+					Type.VOID, // return type
+					ArgTypes.STRINGARRAY.types, // argument types
+					new String[] { "arg" }, // arg names
+					"main", classname, // method, defining class
+					main, cp
+			);
 			append(factory.createNew(classname));
-			append(InstructionConstants.DUP);
-			append(factory.createInvoke(classname, Constants.CONSTRUCTOR_NAME, Type.VOID, ARG_TYPES_NONE,
-				Constants.INVOKESPECIAL));
+			append(InstructionConst.DUP);
+			append(factory.createInvoke(classname, Const.CONSTRUCTOR_NAME, Type.VOID, ArgTypes.NONE.types, Const.INVOKESPECIAL));
 			append(new ALOAD(0));
-			append(factory.createInvoke(STR_JSEPLATFORM, "luaMain", Type.VOID, ARG_TYPES_LUAVALUE_STRINGARRAY,
-				Constants.INVOKESTATIC));
-			append(InstructionConstants.RETURN);
+			append(factory.createInvoke(Types.JSEPLATFORM.name, "luaMain", Type.VOID, ArgTypes.LUAVALUE_STRINGARRAY.types, Const.INVOKESTATIC));
+			append(InstructionConst.RETURN);
 			mg.setMaxStack();
 			cg.addMethod(mg.getMethod());
 			main.dispose();
@@ -337,24 +338,24 @@ public class JavaBuilder {
 	}
 
 	public void dup() {
-		append(InstructionConstants.DUP);
+		append(InstructionConst.DUP);
 	}
 
 	public void pop() {
-		append(InstructionConstants.POP);
+		append(InstructionConst.POP);
 	}
 
 	public void loadNil() {
-		append(factory.createFieldAccess(STR_LUAVALUE, "NIL", TYPE_LUAVALUE, Constants.GETSTATIC));
+		append(factory.createFieldAccess(Types.LUAVALUE.name, "NIL", Types.LUAVALUE.object, Const.GETSTATIC));
 	}
 
 	public void loadNone() {
-		append(factory.createFieldAccess(STR_LUAVALUE, "NONE", TYPE_LUAVALUE, Constants.GETSTATIC));
+		append(factory.createFieldAccess(Types.LUAVALUE.name, "NONE", Types.LUAVALUE.object, Const.GETSTATIC));
 	}
 
 	public void loadBoolean(boolean b) {
 		String field = b? "TRUE": "FALSE";
-		append(factory.createFieldAccess(STR_LUAVALUE, field, TYPE_LUABOOLEAN, Constants.GETSTATIC));
+		append(factory.createFieldAccess(Types.LUAVALUE.name, field, Types.LUABOOLEAN.object, Const.GETSTATIC));
 	}
 
 	private final Map<Integer, Integer>          plainSlotVars     = new HashMap<>();
@@ -374,8 +375,8 @@ public class JavaBuilder {
 	}
 
 	private int findSlotIndex(int slot, boolean isupvalue) {
-		return isupvalue? findSlot(slot, upvalueSlotVars, PREFIX_UPVALUE_SLOT, TYPE_LOCALUPVALUE)
-			: findSlot(slot, plainSlotVars, PREFIX_PLAIN_SLOT, TYPE_LUAVALUE);
+		return isupvalue? findSlot(slot, upvalueSlotVars, PREFIX_UPVALUE_SLOT, Types.LUAVALUE.array)
+			: findSlot(slot, plainSlotVars, PREFIX_PLAIN_SLOT, Types.LUAVALUE.object);
 	}
 
 	public void loadLocal(int pc, int slot) {
@@ -384,7 +385,7 @@ public class JavaBuilder {
 		append(new ALOAD(index));
 		if (isupval) {
 			append(new PUSH(cp, 0));
-			append(InstructionConstants.AALOAD);
+			append(InstructionConst.AALOAD);
 		}
 	}
 
@@ -394,17 +395,17 @@ public class JavaBuilder {
 		if (isupval) {
 			boolean isupcreate = pi.isUpvalueCreate(pc, slot);
 			if (isupcreate) {
-				append(factory.createInvoke(classname, "newupe", TYPE_LOCALUPVALUE, ARG_TYPES_NONE,
-					Constants.INVOKESTATIC));
-				append(InstructionConstants.DUP);
+				append(factory.createInvoke(classname, "newupe", Types.LUAVALUE.array, ArgTypes.NONE.types,
+					Const.INVOKESTATIC));
+				append(InstructionConst.DUP);
 				append(new ASTORE(index));
 			} else {
 				append(new ALOAD(index));
 			}
-			append(InstructionConstants.SWAP);
+			append(InstructionConst.SWAP);
 			append(new PUSH(cp, 0));
-			append(InstructionConstants.SWAP);
-			append(InstructionConstants.AASTORE);
+			append(InstructionConst.SWAP);
+			append(InstructionConst.AASTORE);
 		} else {
 			append(new ASTORE(index));
 		}
@@ -416,8 +417,8 @@ public class JavaBuilder {
 			boolean isupcreate = pi.isUpvalueCreate(pc, slot);
 			if (isupcreate) {
 				int index = findSlotIndex(slot, true);
-				append(factory.createInvoke(classname, "newupn", TYPE_LOCALUPVALUE, ARG_TYPES_NONE,
-					Constants.INVOKESTATIC));
+				append(factory.createInvoke(classname, "newupn", Types.LUAVALUE.array, ArgTypes.NONE.types,
+					Const.INVOKESTATIC));
 				append(new ASTORE(index));
 			}
 		}
@@ -428,8 +429,7 @@ public class JavaBuilder {
 		if (isupassign) {
 			int index = findSlotIndex(slot, false);
 			append(new ALOAD(index));
-			append(factory.createInvoke(classname, "newupl", TYPE_LOCALUPVALUE, ARG_TYPES_LUAVALUE,
-				Constants.INVOKESTATIC));
+			append(factory.createInvoke(classname, "newupl", Types.LUAVALUE.array, ArgTypes.LUAVALUE.types, Const.INVOKESTATIC));
 			int upindex = findSlotIndex(slot, true);
 			append(new ASTORE(upindex));
 		}
@@ -441,34 +441,34 @@ public class JavaBuilder {
 
 	public void loadUpvalue(int upindex) {
 		boolean isrw = pi.isReadWriteUpvalue(pi.upvals[upindex]);
-		append(InstructionConstants.THIS);
+		append(InstructionConst.THIS);
 		if (isrw) {
-			append(factory.createFieldAccess(classname, upvalueName(upindex), TYPE_LOCALUPVALUE, Constants.GETFIELD));
+			append(factory.createFieldAccess(classname, upvalueName(upindex), Types.LUAVALUE.array, Const.GETFIELD));
 			append(new PUSH(cp, 0));
-			append(InstructionConstants.AALOAD);
+			append(InstructionConst.AALOAD);
 		} else {
-			append(factory.createFieldAccess(classname, upvalueName(upindex), TYPE_LUAVALUE, Constants.GETFIELD));
+			append(factory.createFieldAccess(classname, upvalueName(upindex), Types.LUAVALUE.object, Const.GETFIELD));
 		}
 	}
 
 	public void storeUpvalue(int pc, int upindex, int slot) {
 		boolean isrw = pi.isReadWriteUpvalue(pi.upvals[upindex]);
-		append(InstructionConstants.THIS);
+		append(InstructionConst.THIS);
 		if (isrw) {
-			append(factory.createFieldAccess(classname, upvalueName(upindex), TYPE_LOCALUPVALUE, Constants.GETFIELD));
+			append(factory.createFieldAccess(classname, upvalueName(upindex), Types.LUAVALUE.array, Const.GETFIELD));
 			append(new PUSH(cp, 0));
 			loadLocal(pc, slot);
-			append(InstructionConstants.AASTORE);
+			append(InstructionConst.AASTORE);
 		} else {
 			loadLocal(pc, slot);
-			append(factory.createFieldAccess(classname, upvalueName(upindex), TYPE_LUAVALUE, Constants.PUTFIELD));
+			append(factory.createFieldAccess(classname, upvalueName(upindex), Types.LUAVALUE.object, Const.PUTFIELD));
 		}
 	}
 
 	public void newTable(int b, int c) {
 		append(new PUSH(cp, b));
 		append(new PUSH(cp, c));
-		append(factory.createInvoke(STR_LUAVALUE, "tableOf", TYPE_LUATABLE, ARG_TYPES_INT_INT, Constants.INVOKESTATIC));
+		append(factory.createInvoke(Types.LUAVALUE.name, "tableOf", Types.LUATABLE.object, ArgTypes.INT_INT.types, Const.INVOKESTATIC));
 	}
 
 	public void loadVarargs() {
@@ -482,16 +482,16 @@ public class JavaBuilder {
 
 	public void arg(int argindex) {
 		if (argindex == 1) {
-			append(factory.createInvoke(STR_VARARGS, "arg1", TYPE_LUAVALUE, ARG_TYPES_NONE, Constants.INVOKEVIRTUAL));
+			append(factory.createInvoke(Types.VARARGS.name, "arg1", Types.LUAVALUE.object, ArgTypes.NONE.types, Const.INVOKEVIRTUAL));
 		} else {
 			append(new PUSH(cp, argindex));
-			append(factory.createInvoke(STR_VARARGS, "arg", TYPE_LUAVALUE, ARG_TYPES_INT, Constants.INVOKEVIRTUAL));
+			append(factory.createInvoke(Types.VARARGS.name, "arg", Types.LUAVALUE.object, ArgTypes.INT.types, Const.INVOKEVIRTUAL));
 		}
 	}
 
 	private int getVarresultIndex() {
 		if (varresult == null)
-			varresult = mg.addLocalVariable(NAME_VARRESULT, TYPE_VARARGS, null, null);
+			varresult = mg.addLocalVariable(NAME_VARRESULT, Types.VARARGS.object, null, null);
 		return varresult.getIndex();
 	}
 
@@ -505,16 +505,16 @@ public class JavaBuilder {
 
 	public void subargs(int firstarg) {
 		append(new PUSH(cp, firstarg));
-		append(factory.createInvoke(STR_VARARGS, "subargs", TYPE_VARARGS, ARG_TYPES_INT, Constants.INVOKEVIRTUAL));
+		append(factory.createInvoke(Types.VARARGS.name, "subargs", Types.VARARGS.object, ArgTypes.INT.types, Const.INVOKEVIRTUAL));
 	}
 
 	public void getTable() {
-		append(factory.createInvoke(STR_LUAVALUE, "get", TYPE_LUAVALUE, ARG_TYPES_LUAVALUE, Constants.INVOKEVIRTUAL));
+		append(factory.createInvoke(Types.LUAVALUE.name, "get", Types.LUAVALUE.object, ArgTypes.LUAVALUE.types, Const.INVOKEVIRTUAL));
 	}
 
 	public void setTable() {
 		append(
-			factory.createInvoke(STR_LUAVALUE, "set", Type.VOID, ARG_TYPES_LUAVALUE_LUAVALUE, Constants.INVOKEVIRTUAL));
+			factory.createInvoke(Types.LUAVALUE.name, "set", Type.VOID, ArgTypes.LUAVALUE_2.types, Const.INVOKEVIRTUAL));
 	}
 
 	public void unaryop(int o) {
@@ -531,7 +531,7 @@ public class JavaBuilder {
 			op = "len";
 			break;
 		}
-		append(factory.createInvoke(STR_LUAVALUE, op, TYPE_LUAVALUE, Type.NO_ARGS, Constants.INVOKEVIRTUAL));
+		append(factory.createInvoke(Types.LUAVALUE.name, op, Types.LUAVALUE.object, Type.NO_ARGS, Const.INVOKEVIRTUAL));
 	}
 
 	public void binaryop(int o) {
@@ -557,7 +557,7 @@ public class JavaBuilder {
 			op = "pow";
 			break;
 		}
-		append(factory.createInvoke(STR_LUAVALUE, op, TYPE_LUAVALUE, ARG_TYPES_LUAVALUE, Constants.INVOKEVIRTUAL));
+		append(factory.createInvoke(Types.LUAVALUE.name, op, Types.LUAVALUE.object, ArgTypes.LUAVALUE.types, Const.INVOKEVIRTUAL));
 	}
 
 	public void compareop(int o) {
@@ -574,35 +574,35 @@ public class JavaBuilder {
 			op = "lteq_b";
 			break;
 		}
-		append(factory.createInvoke(STR_LUAVALUE, op, Type.BOOLEAN, ARG_TYPES_LUAVALUE, Constants.INVOKEVIRTUAL));
+		append(factory.createInvoke(Types.LUAVALUE.name, op, Type.BOOLEAN, ArgTypes.LUAVALUE.types, Const.INVOKEVIRTUAL));
 	}
 
 	public void areturn() {
-		append(InstructionConstants.ARETURN);
+		append(InstructionConst.ARETURN);
 	}
 
 	public void toBoolean() {
-		append(factory.createInvoke(STR_LUAVALUE, "toboolean", Type.BOOLEAN, Type.NO_ARGS, Constants.INVOKEVIRTUAL));
+		append(factory.createInvoke(Types.LUAVALUE.name, "toboolean", Type.BOOLEAN, Type.NO_ARGS, Const.INVOKEVIRTUAL));
 	}
 
 	public void tostring() {
-		append(factory.createInvoke(STR_BUFFER, "tostring", TYPE_LUASTRING, Type.NO_ARGS, Constants.INVOKEVIRTUAL));
+		append(factory.createInvoke(Types.BUFFER.name, "tostring", Types.LUASTRING.object, Type.NO_ARGS, Const.INVOKEVIRTUAL));
 	}
 
 	public void isNil() {
-		append(factory.createInvoke(STR_LUAVALUE, "isnil", Type.BOOLEAN, Type.NO_ARGS, Constants.INVOKEVIRTUAL));
+		append(factory.createInvoke(Types.LUAVALUE.name, "isnil", Type.BOOLEAN, Type.NO_ARGS, Const.INVOKEVIRTUAL));
 	}
 
 	public void testForLoop() {
-		append(factory.createInvoke(STR_LUAVALUE, "testfor_b", Type.BOOLEAN, ARG_TYPES_LUAVALUE_LUAVALUE,
-			Constants.INVOKEVIRTUAL));
+		append(factory.createInvoke(Types.LUAVALUE.name, "testfor_b", Type.BOOLEAN, ArgTypes.LUAVALUE_2.types,
+			Const.INVOKEVIRTUAL));
 	}
 
 	public void loadArrayArgs(int pc, int firstslot, int nargs) {
 		append(new PUSH(cp, nargs));
-		append(new ANEWARRAY(cp.addClass(STR_LUAVALUE)));
+		append(new ANEWARRAY(cp.addClass(Types.LUAVALUE.name)));
 		for (int i = 0; i < nargs; i++) {
-			append(InstructionConstants.DUP);
+			append(InstructionConst.DUP);
 			append(new PUSH(cp, i));
 			loadLocal(pc, firstslot++);
 			append(new AASTORE());
@@ -620,47 +620,47 @@ public class JavaBuilder {
 		case 2:
 			loadLocal(pc, firstslot);
 			loadLocal(pc, firstslot+1);
-			append(factory.createInvoke(STR_LUAVALUE, "varargsOf", TYPE_VARARGS, ARG_TYPES_LUAVALUE_VARARGS,
-				Constants.INVOKESTATIC));
+			append(factory.createInvoke(Types.LUAVALUE.name, "varargsOf", Types.VARARGS.object, ArgTypes.LUAVALUE_VARARGS.types,
+				Const.INVOKESTATIC));
 			break;
 		case 3:
 			loadLocal(pc, firstslot);
 			loadLocal(pc, firstslot+1);
 			loadLocal(pc, firstslot+2);
-			append(factory.createInvoke(STR_LUAVALUE, "varargsOf", TYPE_VARARGS, ARG_TYPES_LUAVALUE_LUAVALUE_VARARGS,
-				Constants.INVOKESTATIC));
+			append(factory.createInvoke(Types.LUAVALUE.name, "varargsOf", Types.VARARGS.object, ArgTypes.LUAVALUE_3.types,
+				Const.INVOKESTATIC));
 			break;
 		default:
 			loadArrayArgs(pc, firstslot, nargs);
-			append(factory.createInvoke(STR_LUAVALUE, "varargsOf", TYPE_VARARGS, ARG_TYPES_LUAVALUEARRAY,
-				Constants.INVOKESTATIC));
+			append(factory.createInvoke(Types.LUAVALUE.name, "varargsOf", Types.VARARGS.object, ArgTypes.LUAVALUEARRAY.types,
+				Const.INVOKESTATIC));
 			break;
 		}
 	}
 
 	public void newVarargsVarresult(int pc, int firstslot, int nslots) {
+//		var a = (LuaValue::varargsOf);
+//		MethodHandles.Lookup lookup = MethodHandles.lookup();
+//		lookup.unreflect(a);
 		loadArrayArgs(pc, firstslot, nslots);
 		loadVarresult();
-		append(factory.createInvoke(STR_LUAVALUE, "varargsOf", TYPE_VARARGS, ARG_TYPES_LUAVALUEARRAY_VARARGS,
-			Constants.INVOKESTATIC));
+		append(factory.createInvoke(Types.LUAVALUE.name, "varargsOf", Types.VARARGS.object, ArgTypes.LUAVALUEARRAY_VARARGS.types,
+			Const.INVOKESTATIC));
 	}
 
 	public void call(int nargs) {
 		switch (nargs) {
 		case 0:
-			append(factory.createInvoke(STR_LUAVALUE, "call", TYPE_LUAVALUE, ARG_TYPES_NONE, Constants.INVOKEVIRTUAL));
+			append(factory.createInvoke(Types.LUAVALUE.name, "call", Types.LUAVALUE.object, ArgTypes.NONE.types, Const.INVOKEVIRTUAL));
 			break;
 		case 1:
-			append(
-				factory.createInvoke(STR_LUAVALUE, "call", TYPE_LUAVALUE, ARG_TYPES_LUAVALUE, Constants.INVOKEVIRTUAL));
+			append(factory.createInvoke(Types.LUAVALUE.name, "call", Types.LUAVALUE.object, ArgTypes.LUAVALUE.types, Const.INVOKEVIRTUAL));
 			break;
 		case 2:
-			append(factory.createInvoke(STR_LUAVALUE, "call", TYPE_LUAVALUE, ARG_TYPES_LUAVALUE_LUAVALUE,
-				Constants.INVOKEVIRTUAL));
+			append(factory.createInvoke(Types.LUAVALUE.name, "call", Types.LUAVALUE.object, ArgTypes.LUAVALUE_2.types, Const.INVOKEVIRTUAL));
 			break;
 		case 3:
-			append(factory.createInvoke(STR_LUAVALUE, "call", TYPE_LUAVALUE, ARG_TYPES_LUAVALUE_LUAVALUE_LUAVALUE,
-				Constants.INVOKEVIRTUAL));
+			append(factory.createInvoke(Types.LUAVALUE.name, "call", Types.LUAVALUE.object, ArgTypes.LUAVALUE_3.types, Const.INVOKEVIRTUAL));
 			break;
 		default:
 			throw new IllegalArgumentException("can't call with " + nargs + " args");
@@ -668,30 +668,23 @@ public class JavaBuilder {
 	}
 
 	public void newTailcallVarargs() {
-		append(factory.createInvoke(STR_LUAVALUE, "tailcallOf", TYPE_VARARGS, ARG_TYPES_LUAVALUE_VARARGS,
-			Constants.INVOKESTATIC));
+		append(factory.createInvoke(Types.LUAVALUE.name, "tailcallOf", Types.VARARGS.object, ArgTypes.LUAVALUE_VARARGS.types,
+			Const.INVOKESTATIC));
 	}
 
 	public void invoke(int nargs) {
 		switch (nargs) {
-		case -1:
-			append(
-				factory.createInvoke(STR_LUAVALUE, "invoke", TYPE_VARARGS, ARG_TYPES_VARARGS, Constants.INVOKEVIRTUAL));
+		case -1, 1:
+			append(factory.createInvoke(Types.LUAVALUE.name, "invoke", Types.VARARGS.object, ArgTypes.VARARGS.types, Const.INVOKEVIRTUAL));
 			break;
 		case 0:
-			append(factory.createInvoke(STR_LUAVALUE, "invoke", TYPE_VARARGS, ARG_TYPES_NONE, Constants.INVOKEVIRTUAL));
-			break;
-		case 1:
-			append(
-				factory.createInvoke(STR_LUAVALUE, "invoke", TYPE_VARARGS, ARG_TYPES_VARARGS, Constants.INVOKEVIRTUAL));
+			append(factory.createInvoke(Types.LUAVALUE.name, "invoke", Types.VARARGS.object, ArgTypes.NONE.types, Const.INVOKEVIRTUAL));
 			break;
 		case 2:
-			append(factory.createInvoke(STR_LUAVALUE, "invoke", TYPE_VARARGS, ARG_TYPES_LUAVALUE_VARARGS,
-				Constants.INVOKEVIRTUAL));
+			append(factory.createInvoke(Types.LUAVALUE.name, "invoke", Types.VARARGS.object, ArgTypes.LUAVALUE_VARARGS.types, Const.INVOKEVIRTUAL));
 			break;
 		case 3:
-			append(factory.createInvoke(STR_LUAVALUE, "invoke", TYPE_VARARGS, ARG_TYPES_LUAVALUE_LUAVALUE_VARARGS,
-				Constants.INVOKEVIRTUAL));
+			append(factory.createInvoke(Types.LUAVALUE.name, "invoke", Types.VARARGS.object, ArgTypes.LUAVALUE_2.types, Const.INVOKEVIRTUAL));
 			break;
 		default:
 			throw new IllegalArgumentException("can't invoke with " + nargs + " args");
@@ -702,27 +695,27 @@ public class JavaBuilder {
 
 	public void closureCreate(String protoname) {
 		append(factory.createNew(new ObjectType(protoname)));
-		append(InstructionConstants.DUP);
-		append(factory.createInvoke(protoname, "<init>", Type.VOID, Type.NO_ARGS, Constants.INVOKESPECIAL));
+		append(InstructionConst.DUP);
+		append(factory.createInvoke(protoname, "<init>", Type.VOID, Type.NO_ARGS, Const.INVOKESPECIAL));
 	}
 
 	public void closureInitUpvalueFromUpvalue(String protoname, int newup, int upindex) {
 		boolean isrw = pi.isReadWriteUpvalue(pi.upvals[upindex]);
-		Type uptype = isrw? (Type) TYPE_LOCALUPVALUE: (Type) TYPE_LUAVALUE;
+		Type uptype = isrw? Types.LUAVALUE.array : Types.LUAVALUE.object;
 		String srcname = upvalueName(upindex);
 		String destname = upvalueName(newup);
-		append(InstructionConstants.THIS);
-		append(factory.createFieldAccess(classname, srcname, uptype, Constants.GETFIELD));
-		append(factory.createFieldAccess(protoname, destname, uptype, Constants.PUTFIELD));
+		append(InstructionConst.THIS);
+		append(factory.createFieldAccess(classname, srcname, uptype, Const.GETFIELD));
+		append(factory.createFieldAccess(protoname, destname, uptype, Const.PUTFIELD));
 	}
 
 	public void closureInitUpvalueFromLocal(String protoname, int newup, int pc, int srcslot) {
 		boolean isrw = pi.isReadWriteUpvalue(pi.vars[srcslot][pc].upvalue);
-		Type uptype = isrw? (Type) TYPE_LOCALUPVALUE: (Type) TYPE_LUAVALUE;
+		Type uptype = isrw? Types.LUAVALUE.array : Types.LUAVALUE.object;
 		String destname = upvalueName(newup);
 		int index = findSlotIndex(srcslot, isrw);
 		append(new ALOAD(index));
-		append(factory.createFieldAccess(protoname, destname, uptype, Constants.PUTFIELD));
+		append(factory.createFieldAccess(protoname, destname, uptype, Const.PUTFIELD));
 	}
 
 	private final Map<LuaValue, String> constants = new HashMap<>();
@@ -743,7 +736,7 @@ public class JavaBuilder {
 					: createLuaDoubleField(value.checkdouble()): createLuaStringField(value.checkstring());
 				constants.put(value, name);
 			}
-			append(factory.createGetStatic(classname, name, TYPE_LUAVALUE));
+			append(factory.createGetStatic(classname, name, Types.LUAVALUE.object));
 			break;
 		default:
 			throw new IllegalArgumentException("bad constant type: " + value.type());
@@ -752,46 +745,41 @@ public class JavaBuilder {
 
 	private String createLuaIntegerField(int value) {
 		String name = PREFIX_CONSTANT+constants.size();
-		FieldGen fg = new FieldGen(Constants.ACC_STATIC | Constants.ACC_FINAL, TYPE_LUAVALUE, name, cp);
+		FieldGen fg = new FieldGen(Const.ACC_STATIC | Const.ACC_FINAL, Types.LUAVALUE.object, name, cp);
 		cg.addField(fg.getField());
 		init.append(new PUSH(cp, value));
-		init.append(
-			factory.createInvoke(STR_LUAVALUE, "valueOf", TYPE_LUAINTEGER, ARG_TYPES_INT, Constants.INVOKESTATIC));
-		init.append(factory.createPutStatic(classname, name, TYPE_LUAVALUE));
+		init.append(factory.createInvoke(Types.LUAVALUE.name, "valueOf", Types.LUAINTEGER.object, ArgTypes.INT.types, Const.INVOKESTATIC));
+		init.append(factory.createPutStatic(classname, name, Types.LUAVALUE.object));
 		return name;
 	}
 
 	private String createLuaDoubleField(double value) {
 		String name = PREFIX_CONSTANT+constants.size();
-		FieldGen fg = new FieldGen(Constants.ACC_STATIC | Constants.ACC_FINAL, TYPE_LUAVALUE, name, cp);
+		FieldGen fg = new FieldGen(Const.ACC_STATIC | Const.ACC_FINAL, Types.LUAVALUE.object, name, cp);
 		cg.addField(fg.getField());
 		init.append(new PUSH(cp, value));
-		init.append(
-			factory.createInvoke(STR_LUAVALUE, "valueOf", TYPE_LUANUMBER, ARG_TYPES_DOUBLE, Constants.INVOKESTATIC));
-		init.append(factory.createPutStatic(classname, name, TYPE_LUAVALUE));
+		init.append(factory.createInvoke(Types.LUAVALUE.name, "valueOf", Types.LUANUMBER.object, ArgTypes.DOUBLE.types, Const.INVOKESTATIC));
+		init.append(factory.createPutStatic(classname, name, Types.LUAVALUE.object));
 		return name;
 	}
 
 	private String createLuaStringField(LuaString value) {
 		String name = PREFIX_CONSTANT+constants.size();
-		FieldGen fg = new FieldGen(Constants.ACC_STATIC | Constants.ACC_FINAL, TYPE_LUAVALUE, name, cp);
+		FieldGen fg = new FieldGen(Const.ACC_STATIC | Const.ACC_FINAL, Types.LUAVALUE.object, name, cp);
 		cg.addField(fg.getField());
 		LuaString ls = value.checkstring();
 		if (ls.isValidUtf8()) {
 			init.append(new PUSH(cp, value.tojstring()));
-			init.append(factory.createInvoke(STR_LUASTRING, "valueOf", TYPE_LUASTRING, ARG_TYPES_STRING,
-				Constants.INVOKESTATIC));
+			init.append(factory.createInvoke(Types.LUASTRING.name, "valueOf", Types.LUASTRING.object, ArgTypes.STRING.types, Const.INVOKESTATIC));
 		} else {
 			char[] c = new char[ls.m_length];
 			for (int j = 0; j < ls.m_length; j++)
 				c[j] = (char) (0xff & ls.m_bytes[ls.m_offset+j]);
 			init.append(new PUSH(cp, new String(c)));
-			init.append(
-				factory.createInvoke(STR_STRING, "toCharArray", TYPE_CHARARRAY, Type.NO_ARGS, Constants.INVOKEVIRTUAL));
-			init.append(factory.createInvoke(STR_LUASTRING, "valueOf", TYPE_LUASTRING, ARG_TYPES_CHARARRAY,
-				Constants.INVOKESTATIC));
+			init.append(factory.createInvoke(Types.STRING.name, "toCharArray", Types.CHAR.array, Type.NO_ARGS, Const.INVOKEVIRTUAL));
+			init.append(factory.createInvoke(Types.LUASTRING.name, "valueOf", Types.LUASTRING.object, ArgTypes.CHARARRAY.types, Const.INVOKESTATIC));
 		}
-		init.append(factory.createPutStatic(classname, name, TYPE_LUAVALUE));
+		init.append(factory.createPutStatic(classname, name, Types.LUAVALUE.object));
 		return name;
 	}
 
@@ -874,46 +862,46 @@ public class JavaBuilder {
 			dup();
 			append(new PUSH(cp, index0+i));
 			loadLocal(pc, a0+i);
-			append(factory.createInvoke(STR_LUAVALUE, "rawset", Type.VOID, ARG_TYPES_INT_LUAVALUE,
-				Constants.INVOKEVIRTUAL));
+			append(factory.createInvoke(Types.LUAVALUE.name, "rawset", Type.VOID, ArgTypes.INT_LUAVALUE.types,
+				Const.INVOKEVIRTUAL));
 		}
 	}
 
 	public void setlistVarargs(int index0, int vresultbase) {
 		append(new PUSH(cp, index0));
 		loadVarresult();
-		append(factory.createInvoke(STR_LUAVALUE, "rawsetlist", Type.VOID, ARG_TYPES_INT_VARARGS,
-			Constants.INVOKEVIRTUAL));
+		append(factory.createInvoke(Types.LUAVALUE.name, "rawsetlist", Type.VOID, ArgTypes.INT_VARARGS.types,
+			Const.INVOKEVIRTUAL));
 	}
 
 	public void concatvalue() {
 		append(
-			factory.createInvoke(STR_LUAVALUE, "concat", TYPE_LUAVALUE, ARG_TYPES_LUAVALUE, Constants.INVOKEVIRTUAL));
+			factory.createInvoke(Types.LUAVALUE.name, "concat", Types.LUAVALUE.object, ArgTypes.LUAVALUE.types, Const.INVOKEVIRTUAL));
 	}
 
 	public void concatbuffer() {
-		append(factory.createInvoke(STR_LUAVALUE, "concat", TYPE_BUFFER, ARG_TYPES_BUFFER, Constants.INVOKEVIRTUAL));
+		append(factory.createInvoke(Types.LUAVALUE.name, "concat", Types.BUFFER.object, ArgTypes.BUFFER.types, Const.INVOKEVIRTUAL));
 	}
 
 	public void tobuffer() {
-		append(factory.createInvoke(STR_LUAVALUE, "buffer", TYPE_BUFFER, Type.NO_ARGS, Constants.INVOKEVIRTUAL));
+		append(factory.createInvoke(Types.LUAVALUE.name, "buffer", Types.BUFFER.object, Type.NO_ARGS, Const.INVOKEVIRTUAL));
 	}
 
 	public void tovalue() {
-		append(factory.createInvoke(STR_BUFFER, "value", TYPE_LUAVALUE, Type.NO_ARGS, Constants.INVOKEVIRTUAL));
+		append(factory.createInvoke(Types.BUFFER.name, "value", Types.LUAVALUE.object, Type.NO_ARGS, Const.INVOKEVIRTUAL));
 	}
 
 	public void closeUpvalue(int pc, int upindex) {
 		// TODO: assign the upvalue location the value null;
 		/*
 		boolean isrw = pi.isReadWriteUpvalue( pi.upvals[upindex] );
-		append(InstructionConstants.THIS);
-		append(InstructionConstants.ACONST_NULL);
+		append(InstructionConst.THIS);
+		append(InstructionConst.ACONST_NULL);
 		if ( isrw ) {
-			append(factory.createFieldAccess(classname, upvalueName(upindex), TYPE_LUAVALUEARRAY, Constants.PUTFIELD));
+			append(factory.createFieldAccess(classname, upvalueName(upindex), Types.LUAVALUE.array, Const.PUTFIELD));
 		} else {
-			append(factory.createFieldAccess(classname, upvalueName(upindex), TYPE_LUAVALUE, Constants.PUTFIELD));
+			append(factory.createFieldAccess(classname, upvalueName(upindex), Types.LUAVALUE.object, Const.PUTFIELD));
 		}
-		*/
+		//*/
 	}
 }

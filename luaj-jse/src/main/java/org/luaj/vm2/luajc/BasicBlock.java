@@ -3,10 +3,10 @@
  */
 package org.luaj.vm2.luajc;
 
-import java.util.Vector;
-
 import org.luaj.vm2.Lua;
 import org.luaj.vm2.Prototype;
+
+import java.util.Vector;
 
 public class BasicBlock {
 	int          pc0, pc1; // range of program counter values for the block

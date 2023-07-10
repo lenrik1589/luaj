@@ -1,17 +1,12 @@
 package org.luaj.vm2.script;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.io.CharArrayWriter;
-
-import javax.script.Bindings;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import javax.script.*;
+import java.io.CharArrayWriter;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class WriterTest {
 	protected ScriptEngine e;

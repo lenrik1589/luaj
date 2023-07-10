@@ -21,19 +21,13 @@
 ******************************************************************************/
 package org.luaj.vm2.compiler;
 
+import org.luaj.vm2.*;
+import org.luaj.vm2.compiler.FuncState.BlockCnt;
+import org.luaj.vm2.lib.MathLib;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Hashtable;
-
-import org.luaj.vm2.LocVars;
-import org.luaj.vm2.Lua;
-import org.luaj.vm2.LuaError;
-import org.luaj.vm2.LuaInteger;
-import org.luaj.vm2.LuaString;
-import org.luaj.vm2.LuaValue;
-import org.luaj.vm2.Prototype;
-import org.luaj.vm2.compiler.FuncState.BlockCnt;
-import org.luaj.vm2.lib.MathLib;
 
 public class LexState extends Constants {
 
@@ -131,7 +125,7 @@ public class LexState extends Constants {
 	byte              decpoint;                  /* locale decimal point */
 
 	/* ORDER RESERVED */
-	final static String luaX_tokens[] = { "and", "break", "do", "else", "elseif", "end", "false", "for", "function",
+	final static String[] luaX_tokens = { "and", "break", "do", "else", "elseif", "end", "false", "for", "function",
 			"goto", "if", "in", "local", "nil", "not", "or", "repeat", "return", "then", "true", "until", "while", "..",
 			"...", "==", ">=", "<=", "~=", "::", "<eos>", "<number>", "<name>", "<string>", "<eof>", };
 
@@ -203,7 +197,7 @@ public class LexState extends Constants {
 
 	void save(int c) {
 		if (buff == null || nbuff+1 > buff.length)
-			buff = realloc(buff, nbuff*2+1);
+			buff = makeOrGrowArray(buff, nbuff*2+1);
 		buff[nbuff++] = (char) c;
 	}
 
@@ -726,7 +720,7 @@ public class LexState extends Constants {
 		return k == VNONRELOC || k == VLOCAL;
 	}
 
-	static class expdesc {
+	static class ExpDesc {
 		int k; // expkind, from enumerated list, above
 
 		static class U { // originally a union
@@ -762,7 +756,7 @@ public class LexState extends Constants {
 			return k == VKNUM && t.i == NO_JUMP && f.i == NO_JUMP;
 		}
 
-		public void setvalue(expdesc other) {
+		public void setvalue(ExpDesc other) {
 			this.f.i = other.f.i;
 			this.k = other.k;
 			this.t.i = other.t.i;
@@ -878,11 +872,11 @@ public class LexState extends Constants {
 		return ts;
 	}
 
-	void codestring(expdesc e, LuaString s) {
+	void codestring(ExpDesc e, LuaString s) {
 		e.init(VK, fs.stringK(s));
 	}
 
-	void checkname(expdesc e) {
+	void checkname(ExpDesc e) {
 		codestring(e, str_checkname());
 	}
 
@@ -890,7 +884,7 @@ public class LexState extends Constants {
 		FuncState fs = this.fs;
 		Prototype f = fs.f;
 		if (f.locvars == null || fs.nlocvars+1 > f.locvars.length)
-			f.locvars = realloc(f.locvars, fs.nlocvars*2+1);
+			f.locvars = makeOrGrowArray(f.locvars, fs.nlocvars*2+1);
 		f.locvars[fs.nlocvars] = new LocVars(varname, 0, 0);
 		return fs.nlocvars++;
 	}
@@ -899,7 +893,7 @@ public class LexState extends Constants {
 		int reg = registerlocalvar(name);
 		fs.checklimit(dyd.n_actvar+1, Constants.LUAI_MAXVARS, "local variables");
 		if (dyd.actvar == null || dyd.n_actvar+1 > dyd.actvar.length)
-			dyd.actvar = realloc(dyd.actvar, Math.max(1, dyd.n_actvar*2));
+			dyd.actvar = makeOrGrowArray(dyd.actvar, Math.max(1, dyd.n_actvar*2));
 		dyd.actvar[dyd.n_actvar++] = new Vardesc(reg);
 	}
 
@@ -922,11 +916,11 @@ public class LexState extends Constants {
 			fs.getlocvar(--fs.nactvar).endpc = fs.pc;
 	}
 
-	void singlevar(expdesc var) {
+	void singlevar(ExpDesc var) {
 		LuaString varname = this.str_checkname();
 		FuncState fs = this.fs;
 		if (FuncState.singlevaraux(fs, varname, var, 1) == VVOID) { /* global name? */
-			expdesc key = new expdesc();
+			ExpDesc key = new ExpDesc();
 			FuncState.singlevaraux(fs, this.envn, var, 1); /* get environment variable */
 			_assert(var.k == VLOCAL || var.k == VUPVAL);
 			this.codestring(key, varname); /* key is variable name */
@@ -934,7 +928,7 @@ public class LexState extends Constants {
 		}
 	}
 
-	void adjust_assign(int nvars, int nexps, expdesc e) {
+	void adjust_assign(int nvars, int nexps, ExpDesc e) {
 		FuncState fs = this.fs;
 		int extra = nvars-nexps;
 		if (hasmultret(e.k)) {
@@ -1050,13 +1044,13 @@ public class LexState extends Constants {
 		Prototype clp;
 		Prototype f = fs.f; /* prototype of current function */
 		if (f.p == null || fs.np >= f.p.length) {
-			f.p = realloc(f.p, Math.max(1, fs.np*2));
+			f.p = makeOrGrowArray(f.p, Math.max(1, fs.np*2));
 		}
 		f.p[fs.np++] = clp = new Prototype();
 		return clp;
 	}
 
-	void codeclosure(expdesc v) {
+	void codeclosure(ExpDesc v) {
 		FuncState fs = this.fs.prev;
 		v.init(VRELOCABLE, fs.codeABx(OP_CLOSURE, 0, fs.np-1));
 		fs.exp2nextreg(v); /* fix it at stack top (for GC) */
@@ -1087,12 +1081,12 @@ public class LexState extends Constants {
 		Prototype f = fs.f;
 		fs.ret(0, 0); /* final return */
 		fs.leaveblock();
-		f.code = realloc(f.code, fs.pc);
-		f.lineinfo = realloc(f.lineinfo, fs.pc);
-		f.k = realloc(f.k, fs.nk);
-		f.p = realloc(f.p, fs.np);
-		f.locvars = realloc(f.locvars, fs.nlocvars);
-		f.upvalues = realloc(f.upvalues, fs.nups);
+		f.code = makeOrGrowArray(f.code, fs.pc);
+		f.lineinfo = makeOrGrowArray(f.lineinfo, fs.pc);
+		f.k = makeOrGrowArray(f.k, fs.nk);
+		f.p = makeOrGrowArray(f.p, fs.np);
+		f.locvars = makeOrGrowArray(f.locvars, fs.nlocvars);
+		f.upvalues = makeOrGrowArray(f.upvalues, fs.nups);
 		_assert(fs.bl == null);
 		this.fs = fs.prev;
 		// last token read was anchored in defunct function; must reanchor it
@@ -1103,17 +1097,17 @@ public class LexState extends Constants {
 	/* GRAMMAR RULES */
 	/*============================================================*/
 
-	void fieldsel(expdesc v) {
+	void fieldsel(ExpDesc v) {
 		/* fieldsel -> ['.' | ':'] NAME */
 		FuncState fs = this.fs;
-		expdesc key = new expdesc();
+		ExpDesc key = new ExpDesc();
 		fs.exp2anyregup(v);
 		this.next(); /* skip the dot or colon */
 		this.checkname(key);
 		fs.indexed(v, key);
 	}
 
-	void yindex(expdesc v) {
+	void yindex(ExpDesc v) {
 		/* index -> '[' expr ']' */
 		this.next(); /* skip the '[' */
 		this.expr(v);
@@ -1128,8 +1122,8 @@ public class LexState extends Constants {
 	*/
 
 	static class ConsControl {
-		expdesc v = new expdesc(); /* last list item read */
-		expdesc t;                 /* table descriptor */
+		ExpDesc v = new ExpDesc(); /* last list item read */
+		ExpDesc t;                 /* table descriptor */
 		int     nh;                /* total number of `record' elements */
 		int     na;                /* total number of array elements */
 		int     tostore;           /* number of array elements pending to be stored */
@@ -1139,8 +1133,8 @@ public class LexState extends Constants {
 		/* recfield -> (NAME | `['exp1`]') = exp1 */
 		FuncState fs = this.fs;
 		int reg = this.fs.freereg;
-		expdesc key = new expdesc();
-		expdesc val = new expdesc();
+		ExpDesc key = new ExpDesc();
+		ExpDesc val = new ExpDesc();
 		int rkkey;
 		if (this.t.token == TK_NAME) {
 			fs.checklimit(cc.nh, MAX_INT, "items in a constructor");
@@ -1163,7 +1157,7 @@ public class LexState extends Constants {
 		cc.tostore++;
 	}
 
-	void constructor(expdesc t) {
+	void constructor(ExpDesc t) {
 		/* constructor -> ?? */
 		FuncState fs = this.fs;
 		int line = this.linenumber;
@@ -1254,7 +1248,7 @@ public class LexState extends Constants {
 		fs.reserveregs(fs.nactvar); /* reserve register for parameters */
 	}
 
-	void body(expdesc e, boolean needself, int line) {
+	void body(ExpDesc e, boolean needself, int line) {
 		/* body -> `(' parlist `)' chunk END */
 		FuncState new_fs = new FuncState();
 		BlockCnt bl = new BlockCnt();
@@ -1275,7 +1269,7 @@ public class LexState extends Constants {
 		this.close_func();
 	}
 
-	int explist(expdesc v) {
+	int explist(ExpDesc v) {
 		/* explist1 -> expr { `,' expr } */
 		int n = 1; /* at least one expression */
 		this.expr(v);
@@ -1287,9 +1281,9 @@ public class LexState extends Constants {
 		return n;
 	}
 
-	void funcargs(expdesc f, int line) {
+	void funcargs(ExpDesc f, int line) {
 		FuncState fs = this.fs;
-		expdesc args = new expdesc();
+		ExpDesc args = new ExpDesc();
 		int base, nparams;
 		switch (this.t.token) {
 		case '(': { /* funcargs -> `(' [ explist1 ] `)' */
@@ -1338,7 +1332,7 @@ public class LexState extends Constants {
 	** =======================================================================
 	*/
 
-	void primaryexp(expdesc v) {
+	void primaryexp(ExpDesc v) {
 		/* primaryexp -> NAME | '(' expr ')' */
 		switch (t.token) {
 		case '(': {
@@ -1359,7 +1353,7 @@ public class LexState extends Constants {
 		}
 	}
 
-	void suffixedexp(expdesc v) {
+	void suffixedexp(ExpDesc v) {
 		/* suffixedexp ->
 		primaryexp { '.' NAME | '[' exp ']' | ':' NAME funcargs | funcargs } */
 		int line = linenumber;
@@ -1371,14 +1365,14 @@ public class LexState extends Constants {
 				break;
 			}
 			case '[': { /* `[' exp1 `]' */
-				expdesc key = new expdesc();
+				ExpDesc key = new ExpDesc();
 				fs.exp2anyregup(v);
 				this.yindex(key);
 				fs.indexed(v, key);
 				break;
 			}
 			case ':': { /* `:' NAME funcargs */
-				expdesc key = new expdesc();
+				ExpDesc key = new ExpDesc();
 				this.next();
 				this.checkname(key);
 				fs.self(v, key);
@@ -1398,7 +1392,7 @@ public class LexState extends Constants {
 		}
 	}
 
-	void simpleexp(expdesc v) {
+	void simpleexp(ExpDesc v) {
 		/*
 		 * simpleexp -> NUMBER | STRING | NIL | true | false | ... | constructor |
 		 * FUNCTION body | primaryexp
@@ -1524,7 +1518,7 @@ public class LexState extends Constants {
 	** subexpr -> (simpleexp | unop subexpr) { binop subexpr }
 	** where `binop' is any binary operator with a priority higher than `limit'
 	*/
-	int subexpr(expdesc v, int limit) {
+	int subexpr(ExpDesc v, int limit) {
 		int op;
 		int uop;
 		this.enterlevel();
@@ -1539,7 +1533,7 @@ public class LexState extends Constants {
 		/* expand while operators have priorities higher than `limit' */
 		op = getbinopr(this.t.token);
 		while ( op != OPR_NOBINOPR && priority[op].left > limit ) {
-			expdesc v2 = new expdesc();
+			ExpDesc v2 = new ExpDesc();
 			int line = linenumber;
 			this.next();
 			fs.infix(op, v);
@@ -1552,7 +1546,7 @@ public class LexState extends Constants {
 		return op; /* return first untreated operator */
 	}
 
-	void expr(expdesc v) {
+	void expr(ExpDesc v) {
 		this.subexpr(v, 0);
 	}
 
@@ -1594,7 +1588,7 @@ public class LexState extends Constants {
 	static class LHS_assign {
 		LHS_assign prev;
 		/* variable (global, local, upvalue, or indexed) */
-		expdesc v = new expdesc();
+		ExpDesc v = new ExpDesc();
 	}
 
 	/*
@@ -1603,7 +1597,7 @@ public class LexState extends Constants {
 	** local value in a safe place and use this safe copy in the previous
 	** assignment.
 	*/
-	void check_conflict(LHS_assign lh, expdesc v) {
+	void check_conflict(LHS_assign lh, ExpDesc v) {
 		FuncState fs = this.fs;
 		short extra = fs.freereg; /* eventual position to save local variable */
 		boolean conflict = false;
@@ -1631,7 +1625,7 @@ public class LexState extends Constants {
 	}
 
 	void assignment(LHS_assign lh, int nvars) {
-		expdesc e = new expdesc();
+		ExpDesc e = new ExpDesc();
 		this.check_condition(VLOCAL <= lh.v.k && lh.v.k <= VINDEXED, "syntax error");
 		if (this.testnext(',')) { /* assignment -> `,' primaryexp assignment */
 			LHS_assign nv = new LHS_assign();
@@ -1660,7 +1654,7 @@ public class LexState extends Constants {
 
 	int cond() {
 		/* cond -> exp */
-		expdesc v = new expdesc();
+		ExpDesc v = new ExpDesc();
 		/* read condition */
 		this.expr(v);
 		/* `falses' are all equal here */
@@ -1745,7 +1739,7 @@ public class LexState extends Constants {
 	}
 
 	int exp1() {
-		expdesc e = new expdesc();
+		ExpDesc e = new ExpDesc();
 		int k;
 		this.expr(e);
 		k = e.k;
@@ -1802,7 +1796,7 @@ public class LexState extends Constants {
 	void forlist(LuaString indexname) {
 		/* forlist -> NAME {,NAME} IN explist1 forbody */
 		FuncState fs = this.fs;
-		expdesc e = new expdesc();
+		ExpDesc e = new ExpDesc();
 		int nvars = 4; /* gen, state, control, plus at least one declared var */
 		int line;
 		int base = fs.freereg;
@@ -1848,7 +1842,7 @@ public class LexState extends Constants {
 
 	void test_then_block(IntPtr escapelist) {
 		/* test_then_block -> [IF | ELSEIF] cond THEN block */
-		expdesc v = new expdesc();
+		ExpDesc v = new ExpDesc();
 		BlockCnt bl = new BlockCnt();
 		int jf; /* instruction to skip 'then' code (if condition is false) */
 		this.next(); /* skip IF or ELSEIF */
@@ -1889,7 +1883,7 @@ public class LexState extends Constants {
 	}
 
 	void localfunc() {
-		expdesc b = new expdesc();
+		ExpDesc b = new ExpDesc();
 		FuncState fs = this.fs;
 		this.new_localvar(this.str_checkname());
 		this.adjustlocalvars(1);
@@ -1902,7 +1896,7 @@ public class LexState extends Constants {
 		/* stat -> LOCAL NAME {`,' NAME} [`=' explist1] */
 		int nvars = 0;
 		int nexps;
-		expdesc e = new expdesc();
+		ExpDesc e = new ExpDesc();
 		do {
 			this.new_localvar(this.str_checkname());
 			++nvars;
@@ -1917,7 +1911,7 @@ public class LexState extends Constants {
 		this.adjustlocalvars(nvars);
 	}
 
-	boolean funcname(expdesc v) {
+	boolean funcname(ExpDesc v) {
 		/* funcname -> NAME {field} [`:' NAME] */
 		boolean ismethod = false;
 		this.singlevar(v);
@@ -1933,8 +1927,8 @@ public class LexState extends Constants {
 	void funcstat(int line) {
 		/* funcstat -> FUNCTION funcname body */
 		boolean needself;
-		expdesc v = new expdesc();
-		expdesc b = new expdesc();
+		ExpDesc v = new ExpDesc();
+		ExpDesc b = new ExpDesc();
 		this.next(); /* skip FUNCTION */
 		needself = this.funcname(v);
 		this.body(b, needself, line);
@@ -1959,7 +1953,7 @@ public class LexState extends Constants {
 	void retstat() {
 		/* stat -> RETURN explist */
 		FuncState fs = this.fs;
-		expdesc e = new expdesc();
+		ExpDesc e = new ExpDesc();
 		int first, nret; /* registers with returned values */
 		if (block_follow(true) || this.t.token == ';')
 			first = nret = 0; /* return no values */
@@ -2073,7 +2067,7 @@ public class LexState extends Constants {
 		BlockCnt bl = new BlockCnt();
 		open_func(funcstate, bl);
 		fs.f.is_vararg = 1; /* main function is always vararg */
-		expdesc v = new expdesc();
+		ExpDesc v = new ExpDesc();
 		v.init(VLOCAL, 0); /* create and... */
 		fs.newupvalue(envn, v); /* ...set environment upvalue */
 		next(); /* read first token */

@@ -21,22 +21,7 @@
 ******************************************************************************/
 package org.luaj.vm2.lib;
 
-import org.luaj.vm2.Globals;
-import org.luaj.vm2.Lua;
-import org.luaj.vm2.LuaBoolean;
-import org.luaj.vm2.LuaClosure;
-import org.luaj.vm2.LuaError;
-import org.luaj.vm2.LuaFunction;
-import org.luaj.vm2.LuaNil;
-import org.luaj.vm2.LuaNumber;
-import org.luaj.vm2.LuaString;
-import org.luaj.vm2.LuaTable;
-import org.luaj.vm2.LuaThread;
-import org.luaj.vm2.LuaUserdata;
-import org.luaj.vm2.LuaValue;
-import org.luaj.vm2.Print;
-import org.luaj.vm2.Prototype;
-import org.luaj.vm2.Varargs;
+import org.luaj.vm2.*;
 
 /**
  * Subclass of {@link LibFunction} which implements the lua standard
@@ -138,22 +123,22 @@ public class DebugLib extends TwoArgFunction {
 		globals = env.checkglobals();
 		globals.debuglib = this;
 		LuaTable debug = new LuaTable();
-		debug.set("debug", new debug());
-		debug.set("gethook", new gethook());
-		debug.set("getinfo", new getinfo());
-		debug.set("getlocal", new getlocal());
-		debug.set("getmetatable", new getmetatable());
-		debug.set("getregistry", new getregistry());
-		debug.set("getupvalue", new getupvalue());
-		debug.set("getuservalue", new getuservalue());
-		debug.set("sethook", new sethook());
-		debug.set("setlocal", new setlocal());
-		debug.set("setmetatable", new setmetatable());
-		debug.set("setupvalue", new setupvalue());
-		debug.set("setuservalue", new setuservalue());
-		debug.set("traceback", new traceback());
-		debug.set("upvalueid", new upvalueid());
-		debug.set("upvaluejoin", new upvaluejoin());
+		debug.set("debug", new Debug());
+		debug.set("gethook", new GetHook());
+		debug.set("getinfo", new GetInfo());
+		debug.set("getlocal", new GetLocal());
+		debug.set("getmetatable", new GetMetatable());
+		debug.set("getregistry", new GetRegistry());
+		debug.set("getupvalue", new GetUpValue());
+		debug.set("getuservalue", new GetUserValue());
+		debug.set("sethook", new SetHook());
+		debug.set("setlocal", new SetLocal());
+		debug.set("setmetatable", new SetMetatable());
+		debug.set("setupvalue", new SetUpvalue());
+		debug.set("setuservalue", new SetUserValue());
+		debug.set("traceback", new Traceback());
+		debug.set("upvalueid", new UpValueId());
+		debug.set("upvaluejoin", new UpValueJoin());
 		env.set("debug", debug);
 		if (!env.get("package").isnil())
 			env.get("package").get("loaded").set("debug", debug);
@@ -161,7 +146,7 @@ public class DebugLib extends TwoArgFunction {
 	}
 
 	// debug.debug()
-	static final class debug extends ZeroArgFunction {
+	static final class Debug extends ZeroArgFunction {
 		@Override
 		public LuaValue call() {
 			return NONE;
@@ -169,18 +154,21 @@ public class DebugLib extends TwoArgFunction {
 	}
 
 	// debug.gethook ([thread])
-	final class gethook extends VarArgFunction {
+	final class GetHook extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			LuaThread t = args.narg() > 0? args.checkthread(1): globals.running;
 			LuaThread.State s = t.state;
-			return varargsOf(s.hookfunc != null? s.hookfunc: NIL,
-				valueOf((s.hookcall? "c": "")+(s.hookline? "l": "")+(s.hookrtrn? "r": "")), valueOf(s.hookcount));
+			return varargsOf(
+					s.hookfunc != null? s.hookfunc : NIL, 
+					valueOf((s.hookcall ? "c": "") + (s.hookline ? "l": "") + (s.hookrtrn ? "r": "")),
+					valueOf(s.hookcount)
+			);
 		}
 	}
 
 	//	debug.getinfo ([thread,] f [, what])
-	final class getinfo extends VarArgFunction {
+	final class GetInfo extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			int a = 1;
@@ -205,6 +193,9 @@ public class DebugLib extends TwoArgFunction {
 			// start a table
 			DebugInfo ar = callstack.auxgetinfo(what, (LuaFunction) func, frame);
 			LuaTable info = new LuaTable();
+			String extra = what.replaceAll("[SluntLf]", "");
+			if(!extra.isEmpty())
+				throw new LuaError("invalid option(s): \"" + extra + "\"");
 			if (what.indexOf('S') >= 0) {
 				info.set(WHAT, LUA);
 				info.set(SOURCE, valueOf(ar.source));
@@ -218,7 +209,7 @@ public class DebugLib extends TwoArgFunction {
 			if (what.indexOf('u') >= 0) {
 				info.set(NUPS, valueOf(ar.nups));
 				info.set(NPARAMS, valueOf(ar.nparams));
-				info.set(ISVARARG, ar.isvararg? ONE: ZERO);
+				info.set(ISVARARG, ar.isvararg ? ONE: ZERO);
 			}
 			if (what.indexOf('n') >= 0) {
 				info.set(NAME, LuaValue.valueOf(ar.name != null? ar.name: "?"));
@@ -244,7 +235,7 @@ public class DebugLib extends TwoArgFunction {
 	}
 
 	//	debug.getlocal ([thread,] f, local)
-	final class getlocal extends VarArgFunction {
+	final class GetLocal extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			int a = 1;
@@ -264,7 +255,7 @@ public class DebugLib extends TwoArgFunction {
 	}
 
 	//	debug.getmetatable (value)
-	static final class getmetatable extends LibFunction {
+	static final class GetMetatable extends LibFunction {
 		@Override
 		public LuaValue call(LuaValue v) {
 			LuaValue mt = v.getmetatable();
@@ -273,7 +264,7 @@ public class DebugLib extends TwoArgFunction {
 	}
 
 	//	debug.getregistry ()
-	final class getregistry extends ZeroArgFunction {
+	final class GetRegistry extends ZeroArgFunction {
 		@Override
 		public LuaValue call() {
 			return globals;
@@ -281,11 +272,11 @@ public class DebugLib extends TwoArgFunction {
 	}
 
 	//	debug.getupvalue (f, up)
-	static final class getupvalue extends VarArgFunction {
+	static final class GetUpValue extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
-			LuaValue func = args.checkfunction(1);
 			int up = args.checkint(2);
+			LuaValue func = args.checkfunction(1);
 			if (func instanceof LuaClosure) {
 				LuaClosure c = (LuaClosure) func;
 				LuaString name = findupvalue(c, up);
@@ -298,22 +289,38 @@ public class DebugLib extends TwoArgFunction {
 	}
 
 	//	debug.getuservalue (u)
-	static final class getuservalue extends LibFunction {
+	static final class GetUserValue extends LibFunction {
 		@Override
 		public LuaValue call(LuaValue u) {
 			return u.isuserdata()? u: NIL;
 		}
+		
+		@Override
+		public LuaValue invoke(Varargs varargs) {
+			return NIL;
+		}
 	}
 
 	// debug.sethook ([thread,] hook, mask [, count])
-	final class sethook extends VarArgFunction {
+	final class SetHook extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
-			int a = 1;
-			LuaThread t = args.isthread(a)? args.checkthread(a++): globals.running;
-			LuaValue func = args.optfunction(a++, null);
-			String str = args.optjstring(a++, "");
-			int count = args.optint(a++, 0);
+			LuaThread t = globals.running;
+			LuaValue func = null;
+			String str = "";
+			int count = 0;
+			if (args.narg() > 0) {
+				if (args.isthread(1) || args.isnil(1)) {
+					t = args.optthread(1, t);
+					func = args.optvalue(2, null);
+					str = args.checkjstring(3);
+					count = args.optint(4, 0);
+				} else {
+					func = args.optvalue(1, null);
+					str = args.checkjstring(2);
+					count = args.optint(3, 0);
+				}
+			}
 			boolean call = false, line = false, rtrn = false;
 			for (int i = 0; i < str.length(); i++)
 				switch (str.charAt(i)) {
@@ -338,52 +345,57 @@ public class DebugLib extends TwoArgFunction {
 	}
 
 	//	debug.setlocal ([thread,] level, local, value)
-	final class setlocal extends VarArgFunction {
+	final class SetLocal extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			int a = 1;
 			LuaThread thread = args.isthread(a)? args.checkthread(a++): globals.running;
 			int level = args.checkint(a++);
-			int local = args.checkint(a++);
-			LuaValue value = args.arg(a++);
-			CallFrame f = callstack(thread).getCallFrame(level);
+			LuaValue value = args.checkvalue(++a);
+			int local = args.checkint(--a);
+			CallStack stack = callstack(thread);
+			if (level > stack.calls)
+				DebugLib.argerror(a - 2, "level out of range");
+			CallFrame f = stack.getCallFrame(level);
 			return f != null? f.setLocal(local, value): NONE;
 		}
 	}
 
 	//	debug.setmetatable (value, table)
-	static final class setmetatable extends TwoArgFunction {
+	static final class SetMetatable extends LibFunction {
 		@Override
-		public LuaValue call(LuaValue value, LuaValue table) {
-			LuaValue mt = table.opttable(null);
-			switch (value.type()) {
-			case TNIL:
-				LuaNil.s_metatable = mt;
-				break;
-			case TNUMBER:
-				LuaNumber.s_metatable = mt;
-				break;
-			case TBOOLEAN:
-				LuaBoolean.s_metatable = mt;
-				break;
-			case TSTRING:
-				LuaString.s_metatable = mt;
-				break;
-			case TFUNCTION:
-				LuaFunction.s_metatable = mt;
-				break;
-			case TTHREAD:
-				LuaThread.s_metatable = mt;
-				break;
-			default:
-				value.setmetatable(mt);
+		public Varargs invoke(Varargs varargs) {
+			if (varargs.narg() < 2)
+				return argerror("nil or table");
+			LuaValue mt = varargs.arg(2).opttable(null);
+			switch (varargs.arg1().type()) {
+				case TNIL:
+					LuaNil.s_metatable = mt;
+					break;
+				case TNUMBER:
+					LuaNumber.s_metatable = mt;
+					break;
+				case TBOOLEAN:
+					LuaBoolean.s_metatable = mt;
+					break;
+				case TSTRING:
+					LuaString.s_metatable = mt;
+					break;
+				case TFUNCTION:
+					LuaFunction.s_metatable = mt;
+					break;
+				case TTHREAD:
+					LuaThread.s_metatable = mt;
+					break;
+				default:
+					varargs.arg1().setmetatable(mt);
 			}
-			return value;
+			return varargs.arg1();
 		}
 	}
 
 	//	debug.setupvalue (f, up, value)
-	static final class setupvalue extends VarArgFunction {
+	static final class SetUpvalue extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			LuaValue value = args.checkvalue(3);
@@ -402,7 +414,7 @@ public class DebugLib extends TwoArgFunction {
 	}
 
 	//	debug.setuservalue (udata, value)
-	static final class setuservalue extends VarArgFunction {
+	static final class SetUserValue extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			Object o = args.checkuserdata(1);
@@ -415,11 +427,13 @@ public class DebugLib extends TwoArgFunction {
 	}
 
 	//	debug.traceback ([thread,] [message [, level]])
-	final class traceback extends VarArgFunction {
+	final class Traceback extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			int a = 1;
 			LuaThread thread = args.isthread(a)? args.checkthread(a++): globals.running;
+			if (!(args.isstring(a) || args.isnil(a)))
+				return args.arg(a);
 			String message = args.optjstring(a++, null);
 			int level = args.optint(a++, 1);
 			String tb = callstack(thread).traceback(level);
@@ -428,7 +442,7 @@ public class DebugLib extends TwoArgFunction {
 	}
 
 	//	debug.upvalueid (f, n)
-	static final class upvalueid extends VarArgFunction {
+	static final class UpValueId extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			int up = args.checkint(2);
@@ -444,7 +458,7 @@ public class DebugLib extends TwoArgFunction {
 	}
 
 	//	debug.upvaluejoin (f1, n1, f2, n2)
-	static final class upvaluejoin extends VarArgFunction {
+	static final class UpValueJoin extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			int n1 = args.checkint(2);
@@ -536,7 +550,7 @@ public class DebugLib extends TwoArgFunction {
 	CallStack callstack(LuaThread t) {
 		if (t.callstack == null)
 			t.callstack = new CallStack();
-		return (CallStack) t.callstack;
+		return t.callstack;
 	}
 
 	static class DebugInfo {

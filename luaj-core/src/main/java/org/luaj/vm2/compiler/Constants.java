@@ -21,13 +21,7 @@
 ******************************************************************************/
 package org.luaj.vm2.compiler;
 
-import org.luaj.vm2.LocVars;
-import org.luaj.vm2.Lua;
-import org.luaj.vm2.LuaError;
-import org.luaj.vm2.LuaString;
-import org.luaj.vm2.LuaValue;
-import org.luaj.vm2.Prototype;
-import org.luaj.vm2.Upvaldesc;
+import org.luaj.vm2.*;
 
 /**
  * Constants used by the LuaC compiler and related classes.
@@ -49,13 +43,16 @@ public class Constants extends Lua {
 
 	/* OpArgMask */
 	static final int OpArgN = 0, /* argument is not used */
-		OpArgU = 1, /* argument is used */
-		OpArgR = 2, /* argument is a register or a jump offset */
-		OpArgK = 3; /* argument is a constant or register/constant */
+		               OpArgU = 1, /* argument is used */
+		               OpArgR = 2, /* argument is a register or a jump offset */
+		               OpArgK = 3; /* argument is a constant or register/constant */
 
 	protected static void _assert(boolean b) {
-		if (!b)
+		try {
+			assert b;
+		} catch (AssertionError ae) {
 			throw new LuaError("compiler assert failed");
+		}
 	}
 
 	static void SET_OPCODE(InstructionPtr i, int o) {
@@ -98,76 +95,76 @@ public class Constants extends Lua {
 		return o<<POS_OP & MASK_OP | a<<POS_Ax & MASK_Ax;
 	}
 
-	// vector reallocation
+	// vector reallocation ???????????????
 
-	static LuaValue[] realloc(LuaValue[] v, int n) {
-		LuaValue[] a = new LuaValue[n];
+	static LuaValue[] makeOrGrowArray(LuaValue[] v, int length) {
+		LuaValue[] a = new LuaValue[length];
 		if (v != null)
-			System.arraycopy(v, 0, a, 0, Math.min(v.length, n));
+			System.arraycopy(v, 0, a, 0, Math.min(v.length, length));
 		return a;
 	}
 
-	static Prototype[] realloc(Prototype[] v, int n) {
-		Prototype[] a = new Prototype[n];
+	static Prototype[] makeOrGrowArray(Prototype[] v, int length) {
+		Prototype[] a = new Prototype[length];
 		if (v != null)
-			System.arraycopy(v, 0, a, 0, Math.min(v.length, n));
+			System.arraycopy(v, 0, a, 0, Math.min(v.length, length));
 		return a;
 	}
 
-	static LuaString[] realloc(LuaString[] v, int n) {
-		LuaString[] a = new LuaString[n];
+	static LuaString[] makeOrGrowArray(LuaString[] v, int length) {
+		LuaString[] a = new LuaString[length];
 		if (v != null)
-			System.arraycopy(v, 0, a, 0, Math.min(v.length, n));
+			System.arraycopy(v, 0, a, 0, Math.min(v.length, length));
 		return a;
 	}
 
-	static LocVars[] realloc(LocVars[] v, int n) {
-		LocVars[] a = new LocVars[n];
+	static LocVars[] makeOrGrowArray(LocVars[] v, int length) {
+		LocVars[] a = new LocVars[length];
 		if (v != null)
-			System.arraycopy(v, 0, a, 0, Math.min(v.length, n));
+			System.arraycopy(v, 0, a, 0, Math.min(v.length, length));
 		return a;
 	}
 
-	static Upvaldesc[] realloc(Upvaldesc[] v, int n) {
-		Upvaldesc[] a = new Upvaldesc[n];
+	static Upvaldesc[] makeOrGrowArray(Upvaldesc[] v, int length) {
+		Upvaldesc[] a = new Upvaldesc[length];
 		if (v != null)
-			System.arraycopy(v, 0, a, 0, Math.min(v.length, n));
+			System.arraycopy(v, 0, a, 0, Math.min(v.length, length));
 		return a;
 	}
 
-	static LexState.Vardesc[] realloc(LexState.Vardesc[] v, int n) {
-		LexState.Vardesc[] a = new LexState.Vardesc[n];
+	static LexState.Vardesc[] makeOrGrowArray(LexState.Vardesc[] v, int length) {
+		LexState.Vardesc[] a = new LexState.Vardesc[length];
 		if (v != null)
-			System.arraycopy(v, 0, a, 0, Math.min(v.length, n));
+			System.arraycopy(v, 0, a, 0, Math.min(v.length, length));
 		return a;
 	}
 
 	static LexState.Labeldesc[] grow(LexState.Labeldesc[] v, int min_n) {
-		return v == null? new LexState.Labeldesc[2]: v.length < min_n? realloc(v, v.length*2): v;
+		return v == null? new LexState.Labeldesc[2]: v.length < min_n? makeOrGrowArray(v, v.length*2): v;
 	}
 
-	static LexState.Labeldesc[] realloc(LexState.Labeldesc[] v, int n) {
+	static LexState.Labeldesc[] makeOrGrowArray(LexState.Labeldesc[] v, int n) {
 		LexState.Labeldesc[] a = new LexState.Labeldesc[n];
 		if (v != null)
 			System.arraycopy(v, 0, a, 0, Math.min(v.length, n));
 		return a;
 	}
 
-	static int[] realloc(int[] v, int n) {
+	static int[] makeOrGrowArray(int[] v, int n) {
 		int[] a = new int[n];
 		if (v != null)
 			System.arraycopy(v, 0, a, 0, Math.min(v.length, n));
 		return a;
 	}
 
-	static byte[] realloc(byte[] v, int n) {
+	static byte[] makeOrGrowArray(byte[] v, int n) {
 		byte[] a = new byte[n];
 		if (v != null)
 			System.arraycopy(v, 0, a, 0, Math.min(v.length, n));
 		return a;
 	}
 
-	static char[] realloc(char[] v, int n) {
+	static char[] makeOrGrowArray(char[] v, int n) {
 		char[] a = new char[n];
 		if (v != null)
 			System.arraycopy(v, 0, a, 0, Math.min(v.length, n));

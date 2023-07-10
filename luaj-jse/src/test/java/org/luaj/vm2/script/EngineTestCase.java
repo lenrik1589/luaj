@@ -1,25 +1,17 @@
 package org.luaj.vm2.script;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-
-import java.io.CharArrayReader;
-import java.io.CharArrayWriter;
-import java.io.Reader;
-
-import javax.script.Bindings;
-import javax.script.Compilable;
-import javax.script.CompiledScript;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.luaj.vm2.LuaFunction;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.OneArgFunction;
+
+import javax.script.*;
+import java.io.CharArrayReader;
+import java.io.CharArrayWriter;
+import java.io.Reader;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 abstract class EngineTestCase {
 	protected ScriptEngine e;

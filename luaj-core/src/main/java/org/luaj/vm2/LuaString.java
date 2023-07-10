@@ -21,13 +21,9 @@
 ******************************************************************************/
 package org.luaj.vm2;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintStream;
-
 import org.luaj.vm2.lib.MathLib;
+
+import java.io.*;
 
 /**
  * Subclass of {@link LuaValue} for representing lua strings.

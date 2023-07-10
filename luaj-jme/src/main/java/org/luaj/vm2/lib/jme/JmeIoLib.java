@@ -21,18 +21,17 @@
 ******************************************************************************/
 package org.luaj.vm2.lib.jme;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
-import javax.microedition.io.Connector;
-import javax.microedition.io.StreamConnection;
-
 import org.luaj.vm2.Globals;
 import org.luaj.vm2.LuaString;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.IoLib;
 import org.luaj.vm2.lib.LibFunction;
+
+import javax.microedition.io.Connector;
+import javax.microedition.io.StreamConnection;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * Subclass of {@link IoLib} and therefore {@link LibFunction} which implements

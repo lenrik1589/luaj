@@ -21,9 +21,9 @@
 ******************************************************************************/
 package org.luaj.vm2.ast;
 
-import java.util.List;
-
 import org.luaj.vm2.ast.Exp.VarExp;
+
+import java.util.List;
 
 abstract public class Visitor {
 	public void visit(Chunk chunk) {

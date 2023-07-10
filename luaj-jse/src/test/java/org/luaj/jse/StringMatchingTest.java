@@ -1,12 +1,12 @@
 package org.luaj.jse;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.luaj.vm2.LuaString;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.jse.JsePlatform;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class StringMatchingTest {
 

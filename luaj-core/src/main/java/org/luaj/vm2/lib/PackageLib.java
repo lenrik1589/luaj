@@ -21,15 +21,10 @@
 ******************************************************************************/
 package org.luaj.vm2.lib;
 
+import org.luaj.vm2.*;
+
 import java.io.InputStream;
 import java.nio.file.FileSystems;
-
-import org.luaj.vm2.Globals;
-import org.luaj.vm2.LuaFunction;
-import org.luaj.vm2.LuaString;
-import org.luaj.vm2.LuaTable;
-import org.luaj.vm2.LuaValue;
-import org.luaj.vm2.Varargs;
 
 /**
  * Subclass of {@link LibFunction} which implements the lua standard package and
@@ -113,36 +108,36 @@ public class PackageLib extends TwoArgFunction {
 		DEFAULT_LUA_PATH = path;
 	}
 
-	static final LuaString         _LOADED     = valueOf("loaded");
-	private static final LuaString _LOADLIB    = valueOf("loadlib");
-	static final LuaString         _PRELOAD    = valueOf("preload");
-	static final LuaString         _PATH       = valueOf("path");
-	static final LuaString         _SEARCHPATH = valueOf("searchpath");
-	static final LuaString         _SEARCHERS  = valueOf("searchers");
-	static final LuaString         _SEEALL     = valueOf("seeall");
+	        static final LuaString LOADED     = valueOf("loaded");
+	private static final LuaString LOADLIB    = valueOf("loadlib");
+	        static final LuaString PRELOAD    = valueOf("preload");
+	        static final LuaString PATH       = valueOf("path");
+	        static final LuaString SEARCHPATH = valueOf("searchpath");
+	        static final LuaString SEARCHERS  = valueOf("searchers");
+	        static final LuaString SEEALL     = valueOf("seeall");
 
 	/** The globals that were used to load this library. */
 	Globals globals;
 
 	/** The table for this package. */
-	LuaTable package_;
+	LuaTable packageTable;
 
 	/** Loader that loads from {@code preload} table if found there */
-	public preload_searcher preload_searcher;
+	public PreloadSearcher preload_searcher;
 
 	/**
 	 * Loader that loads as a lua script using the lua path currently in
 	 * {@link path}
 	 */
-	public lua_searcher lua_searcher;
+	public LuaSearcher lua_searcher;
 
 	/**
 	 * Loader that loads as a Java class. Class must have public constructor and
 	 * be a LuaValue.
 	 */
-	public java_searcher java_searcher;
+	public JavaSearcher java_searcher;
 
-	private static final LuaString _SENTINEL = valueOf("\u0001");
+	private static final LuaString SENTINEL = valueOf("\u0001");
 
 	private static final String FILE_SEP = FileSystems.getDefault().getSeparator();
 
@@ -161,29 +156,29 @@ public class PackageLib extends TwoArgFunction {
 	@Override
 	public LuaValue call(LuaValue modname, LuaValue env) {
 		globals = env.checkglobals();
-		globals.set("require", new require());
-		package_ = new LuaTable();
-		package_.set(_LOADED, new LuaTable());
-		package_.set(_PRELOAD, new LuaTable());
-		package_.set(_PATH, LuaValue.valueOf(DEFAULT_LUA_PATH));
-		package_.set(_LOADLIB, new loadlib());
-		package_.set(_SEARCHPATH, new searchpath());
-		package_.set(_SEEALL, new seeall());
+		globals.set("require", new Require());
+		packageTable = new LuaTable();
+		packageTable.set(LOADED, new LuaTable());
+		packageTable.set(PRELOAD, new LuaTable());
+		packageTable.set(PATH, LuaValue.valueOf(DEFAULT_LUA_PATH));
+		packageTable.set(LOADLIB, new Loadlib());
+		packageTable.set(SEARCHPATH, new Searchpath());
+		packageTable.set(SEEALL, new SeeAll());
 		LuaTable searchers = new LuaTable();
-		searchers.set(1, preload_searcher = new preload_searcher());
-		searchers.set(2, lua_searcher = new lua_searcher());
-		searchers.set(3, java_searcher = new java_searcher());
-		package_.set(_SEARCHERS, searchers);
-		package_.set("config", FILE_SEP + "\n;\n?\n!\n-\n");
-		package_.get(_LOADED).set("package", package_);
-		env.set("package", package_);
+		searchers.set(1, preload_searcher = new PreloadSearcher());
+		searchers.set(2, lua_searcher = new LuaSearcher());
+		searchers.set(3, java_searcher = new JavaSearcher());
+		packageTable.set(SEARCHERS, searchers);
+		packageTable.set("config", FILE_SEP + "\n;\n?\n!\n-\n");
+		packageTable.get(LOADED).set("package", packageTable);
+		env.set("package", packageTable);
 		globals.package_ = this;
 		return env;
 	}
 
 	/** Allow packages to mark themselves as loaded */
 	public void setIsLoaded(String name, LuaTable value) {
-		package_.get(_LOADED).set(name, value);
+		packageTable.get(LOADED).set(name, value);
 	}
 
 	/**
@@ -191,7 +186,7 @@ public class PackageLib extends TwoArgFunction {
 	 * sets the value of {@link path} to be used in subsequent searches.
 	 */
 	public void setLuaPath(String newLuaPath) {
-		package_.set(_PATH, LuaValue.valueOf(newLuaPath));
+		packageTable.set(PATH, LuaValue.valueOf(newLuaPath));
 	}
 
 	@Override
@@ -233,20 +228,20 @@ public class PackageLib extends TwoArgFunction {
 	 * If there is any error loading or running the module, or if it cannot find
 	 * any loader for the module, then require raises an error.
 	 */
-	public class require extends OneArgFunction {
+	public class Require extends OneArgFunction {
 		@Override
 		public LuaValue call(LuaValue arg) {
 			LuaString name = arg.checkstring();
-			LuaValue loaded = package_.get(_LOADED);
+			LuaValue loaded = packageTable.get(LOADED);
 			LuaValue result = loaded.get(name);
 			if (result.toboolean()) {
-				if (result == _SENTINEL)
+				if (result == SENTINEL)
 					error("loop or previous error loading module '" + name + "'");
 				return result;
 			}
 
 			/* else must load it; iterate over available loaders */
-			LuaTable tbl = package_.get(_SEARCHERS).checktable();
+			LuaTable tbl = packageTable.get(SEARCHERS).checktable();
 			StringBuffer sb = new StringBuffer();
 			Varargs loader = null;
 			for (int i = 1; true; i++) {
@@ -264,17 +259,17 @@ public class PackageLib extends TwoArgFunction {
 			}
 
 			// load the module using the loader
-			loaded.set(name, _SENTINEL);
+			loaded.set(name, SENTINEL);
 			result = loader.arg1().call(name, loader.arg(2));
 			if (!result.isnil())
 				loaded.set(name, result);
-			else if ((result = loaded.get(name)) == _SENTINEL)
+			else if ((result = loaded.get(name)) == SENTINEL)
 				loaded.set(name, result = LuaValue.TRUE);
 			return result;
 		}
 	}
 
-	public static class loadlib extends VarArgFunction {
+	public static class Loadlib extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			args.checkstring(1);
@@ -282,27 +277,27 @@ public class PackageLib extends TwoArgFunction {
 		}
 	}
 
-	public class preload_searcher extends VarArgFunction {
+	public class PreloadSearcher extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			LuaString name = args.checkstring(1);
-			LuaValue val = package_.get(_PRELOAD).get(name);
+			LuaValue val = packageTable.get(PRELOAD).get(name);
 			return val.isnil()? valueOf("\n\tno field package.preload['" + name + "']"): val;
 		}
 	}
 
-	public class lua_searcher extends VarArgFunction {
+	public class LuaSearcher extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			LuaString name = args.checkstring(1);
 
 			// get package path
-			LuaValue path = package_.get(_PATH);
+			LuaValue path = packageTable.get(PATH);
 			if (!path.isstring())
 				return valueOf("package.path is not a string");
 
 			// get the searchpath function.
-			Varargs v = package_.get(_SEARCHPATH).invoke(varargsOf(name, path));
+			Varargs v = packageTable.get(SEARCHPATH).invoke(varargsOf(name, path));
 
 			// Did we get a result?
 			if (!v.isstring(1))
@@ -319,7 +314,7 @@ public class PackageLib extends TwoArgFunction {
 		}
 	}
 
-	public class searchpath extends VarArgFunction {
+	public class Searchpath extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			String name = args.checkjstring(1);
@@ -367,7 +362,7 @@ public class PackageLib extends TwoArgFunction {
 		}
 	}
 
-	public class seeall extends OneArgFunction {
+	public class SeeAll extends OneArgFunction {
 		@Override
 		public LuaValue call(LuaValue arg) {
 			LuaTable mt = new LuaTable();
@@ -377,18 +372,18 @@ public class PackageLib extends TwoArgFunction {
 		}
 	}
 
-	public class java_searcher extends VarArgFunction {
+	public class JavaSearcher extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			String name = args.checkjstring(1);
 			String classname = toClassname(name);
-			Class c = null;
-			LuaValue v = null;
+			Class<?> c;
+			LuaValue v;
 			try {
 				c = Class.forName(classname);
-				v = (LuaValue) c.newInstance();
+				v = (LuaValue) c.getDeclaredConstructor().newInstance();
 				if (v.isfunction())
-					((LuaFunction) v).initupvalue1(globals);
+					v.initupvalue1(globals);
 				return varargsOf(v, globals);
 			} catch (ClassNotFoundException cnfe) {
 				return valueOf("\n\tno class '" + classname + "'");

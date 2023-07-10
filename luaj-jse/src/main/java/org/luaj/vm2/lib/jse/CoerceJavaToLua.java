@@ -21,15 +21,11 @@
 ******************************************************************************/
 package org.luaj.vm2.lib.jse;
 
+import org.luaj.vm2.*;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.luaj.vm2.LuaDouble;
-import org.luaj.vm2.LuaInteger;
-import org.luaj.vm2.LuaString;
-import org.luaj.vm2.LuaUserdata;
-import org.luaj.vm2.LuaValue;
 
 /**
  * Helper class to coerce values from Java to lua within the luajava library.

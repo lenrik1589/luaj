@@ -94,54 +94,54 @@ public class JseMathLib extends org.luaj.vm2.lib.MathLib {
 	public LuaValue call(LuaValue modname, LuaValue env) {
 		super.call(modname, env);
 		LuaValue math = env.get("math");
-		math.set("acos", new acos());
-		math.set("asin", new asin());
-		math.set("atan", new atan());
-		math.set("atan2", new atan2());
-		math.set("cosh", new cosh());
-		math.set("exp", new exp());
-		math.set("log", new log());
-		math.set("pow", new pow());
-		math.set("sinh", new sinh());
-		math.set("tanh", new tanh());
+		math.set("acos", new Acos());
+		math.set("asin", new Asin());
+		math.set("atan", new Atan());
+		math.set("atan2", new Atan2());
+		math.set("cosh", new Cosh());
+		math.set("exp", new Exp());
+		math.set("log", new Log());
+		math.set("pow", new Pow());
+		math.set("sinh", new Sinh());
+		math.set("tanh", new Tanh());
 		return math;
 	}
 
-	static final class acos extends UnaryOp {
+	static final class Acos extends UnaryOp {
 		@Override
 		protected double call(double d) { return Math.acos(d); }
 	}
 
-	static final class asin extends UnaryOp {
+	static final class Asin extends UnaryOp {
 		@Override
 		protected double call(double d) { return Math.asin(d); }
 	}
 
-	static final class atan extends TwoArgFunction {
+	static final class Atan extends TwoArgFunction {
 		@Override
 		public LuaValue call(LuaValue x, LuaValue y) {
 			return valueOf(Math.atan2(x.checkdouble(), y.optdouble(1)));
 		}
 	}
 
-	static final class atan2 extends TwoArgFunction {
+	static final class Atan2 extends TwoArgFunction {
 		@Override
 		public LuaValue call(LuaValue x, LuaValue y) {
 			return valueOf(Math.atan2(x.checkdouble(), y.checkdouble()));
 		}
 	}
 
-	static final class cosh extends UnaryOp {
+	static final class Cosh extends UnaryOp {
 		@Override
 		protected double call(double d) { return Math.cosh(d); }
 	}
 
-	static final class exp extends UnaryOp {
+	static final class Exp extends UnaryOp {
 		@Override
 		protected double call(double d) { return Math.exp(d); }
 	}
 
-	static final class log extends TwoArgFunction {
+	static final class Log extends TwoArgFunction {
 		@Override
 		public LuaValue call(LuaValue x, LuaValue base) {
 			double nat = Math.log(x.checkdouble());
@@ -152,17 +152,17 @@ public class JseMathLib extends org.luaj.vm2.lib.MathLib {
 		}
 	}
 
-	static final class pow extends BinaryOp {
+	static final class Pow extends BinaryOp {
 		@Override
 		protected double call(double x, double y) { return Math.pow(x, y); }
 	}
 
-	static final class sinh extends UnaryOp {
+	static final class Sinh extends UnaryOp {
 		@Override
 		protected double call(double d) { return Math.sinh(d); }
 	}
 
-	static final class tanh extends UnaryOp {
+	static final class Tanh extends UnaryOp {
 		@Override
 		protected double call(double d) { return Math.tanh(d); }
 	}

@@ -21,28 +21,17 @@
 * THE SOFTWARE.
 ******************************************************************************/
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.Vector;
-
-import org.luaj.vm2.Globals;
-import org.luaj.vm2.Lua;
-import org.luaj.vm2.LuaTable;
-import org.luaj.vm2.LuaValue;
-import org.luaj.vm2.Print;
-import org.luaj.vm2.Varargs;
+import org.luaj.vm2.*;
 import org.luaj.vm2.lib.jse.JsePlatform;
 import org.luaj.vm2.luajc.LuaJC;
+
+import java.io.*;
+import java.util.Vector;
 
 /**
  * lua command for use in JSE environments.
  */
-public class lua {
+public class LuaCommand {
 	private static final String version = Lua._VERSION + " Copyright (c) 2012 Luaj.org.org";
 
 	private static final String usage = "usage: java -cp luaj-jse.jar lua [options] [script [args]].\n"

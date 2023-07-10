@@ -1,11 +1,11 @@
 package org.luaj.vm2.luajc;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.luaj.vm2.LuaFunction;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.Prototype;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /*******************************************************************************
  * Copyright (c) 2010 Luaj.org. All rights reserved.

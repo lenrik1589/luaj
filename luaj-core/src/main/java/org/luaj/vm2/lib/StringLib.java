@@ -21,16 +21,11 @@
 ******************************************************************************/
 package org.luaj.vm2.lib;
 
+import org.luaj.vm2.*;
+import org.luaj.vm2.compiler.DumpState;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-
-import org.luaj.vm2.Buffer;
-import org.luaj.vm2.LuaClosure;
-import org.luaj.vm2.LuaString;
-import org.luaj.vm2.LuaTable;
-import org.luaj.vm2.LuaValue;
-import org.luaj.vm2.Varargs;
-import org.luaj.vm2.compiler.DumpState;
 
 /**
  * Subclass of {@link LibFunction} which implements the lua standard
@@ -265,57 +260,32 @@ public class StringLib extends TwoArgFunction {
 
 			for (int i = 0; i < n;) {
 				switch (c = fmt.luaByte(i++)) {
-				case '\n':
-					result.append("\n");
-					break;
-				default:
-					result.append((byte) c);
-					break;
-				case L_ESC:
-					if (i < n) {
-						if ((c = fmt.luaByte(i)) == L_ESC) {
-							++i;
-							result.append((byte) L_ESC);
-						} else {
-							arg++;
-							FormatDesc fdsc = new FormatDesc(args, fmt, i);
-							i += fdsc.length;
-							switch (fdsc.conversion) {
-							case 'c':
-								fdsc.format(result, (byte) args.checkint(arg));
-								break;
-							case 'i':
-							case 'd':
-								fdsc.format(result, args.checklong(arg));
-								break;
-							case 'o':
-							case 'u':
-							case 'x':
-							case 'X':
-								fdsc.format(result, args.checklong(arg));
-								break;
-							case 'e':
-							case 'E':
-							case 'f':
-							case 'g':
-							case 'G':
-								fdsc.format(result, args.checkdouble(arg));
-								break;
-							case 'q':
-								addquoted(result, args.checkstring(arg));
-								break;
-							case 's': {
-								LuaString s = args.checkstring(arg);
-								if (fdsc.precision == -1 && s.length() >= 100) {
-									result.append(s);
-								} else {
-									fdsc.format(result, s);
+					case '\n' -> result.append("\n");
+					default -> result.append((byte) c);
+					case L_ESC -> {
+						if (i < n) {
+							if ((c = fmt.luaByte(i)) == L_ESC) {
+								++i;
+								result.append((byte) L_ESC);
+							} else {
+								arg++;
+								FormatDesc fdsc = new FormatDesc(args, fmt, i);
+								i += fdsc.length;
+								switch (fdsc.conversion) {
+									case 'c' -> fdsc.format(result, (byte) args.checkint(arg));
+									case 'i', 'd', 'o', 'u', 'x', 'X' -> fdsc.format(result, args.checklong(arg));
+									case 'e', 'E', 'f', 'g', 'G' -> fdsc.format(result, args.checkdouble(arg));
+									case 'q' -> addquoted(result, args.checkstring(arg));
+									case 's' -> {
+										LuaString s = args.checkstring(arg);
+										if (fdsc.precision == -1 && s.length() >= 100) {
+											result.append(s);
+										} else {
+											fdsc.format(result, s);
+										}
+									}
+									default -> error("invalid option '%" + (char) fdsc.conversion + "' to 'format'");
 								}
-							}
-								break;
-							default:
-								error("invalid option '%" + (char) fdsc.conversion + "' to 'format'");
-								break;
 							}
 						}
 					}

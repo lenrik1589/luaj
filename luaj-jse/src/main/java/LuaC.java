@@ -21,14 +21,6 @@
 * THE SOFTWARE.
 ******************************************************************************/
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-
 import org.luaj.vm2.Globals;
 import org.luaj.vm2.Lua;
 import org.luaj.vm2.Print;
@@ -36,10 +28,12 @@ import org.luaj.vm2.Prototype;
 import org.luaj.vm2.compiler.DumpState;
 import org.luaj.vm2.lib.jse.JsePlatform;
 
+import java.io.*;
+
 /**
  * Compiler for lua files to lua bytecode.
  */
-public class luac {
+public class LuaC {
 	private static final String version = Lua._VERSION + "Copyright (C) 2009 luaj.org";
 
 	private static final String usage = "usage: java -cp luaj-jse.jar luac [options] [filenames].\n"
@@ -66,10 +60,10 @@ public class luac {
 	private String  encoding     = null;
 
 	public static void main(String[] args) throws IOException {
-		new luac(args);
+		new LuaC(args);
 	}
 
-	private luac(String[] args) throws IOException {
+	private LuaC(String[] args) throws IOException {
 
 		// process args
 		try {

@@ -21,10 +21,10 @@
  ******************************************************************************/
 package org.luaj.vm2;
 
+import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
-
-import org.junit.jupiter.api.Test;
 
 /**
  * Tests of basic unary and binary operators on main value types.

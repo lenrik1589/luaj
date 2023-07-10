@@ -34,14 +34,14 @@ import java.io.Reader;
  * classes can come from the class loader.
  * <P>
  * The implementation should be acquired using
- * {@link LuajClassLoader#NewLauncher()} or
- * {@link LuajClassLoader#NewLauncher(Class)} which ensure that the classes are
+ * {@link LuajClassLoader#newLauncher()} or
+ * {@link LuajClassLoader#newLauncher(Class)} which ensure that the classes are
  * loaded to give each Launcher instance a pristine set of Globals, including
  * the shared metatables.
  *
  * @see LuajClassLoader
- * @see LuajClassLoader#NewLauncher()
- * @see LuajClassLoader#NewLauncher(Class)
+ * @see LuajClassLoader#newLauncher()
+ * @see LuajClassLoader#newLauncher(Class)
  * @see DefaultLauncher
  * @since luaj 3.0.1
  */

@@ -47,15 +47,15 @@ import java.util.Map;
  * The {@link Launcher} interface is loaded as a system class by exception so
  * that the caller may use it to launch lua scripts.
  * <P>
- * By default {@link #NewLauncher()} creates a subclass of {@link Launcher} of
+ * By default {@link #newLauncher()} creates a subclass of {@link Launcher} of
  * type {@link DefaultLauncher} which creates debug globals, runs the script,
  * and prints the return values. This behavior can be changed by supplying a
- * different implementation class to {@link #NewLauncher(Class)} which must
+ * different implementation class to {@link #newLauncher(Class)} which must
  * extend {@link Launcher}.
  *
  * @see Launcher
- * @see #NewLauncher()
- * @see #NewLauncher(Class)
+ * @see #newLauncher()
+ * @see #newLauncher(Class)
  * @see DefaultLauncher
  * @since luaj 3.0.1
  */
@@ -89,8 +89,8 @@ public class LuajClassLoader extends ClassLoader {
 	 * @throws IllegalAccessException
 	 * @throws ClassNotFoundException
 	 */
-	public static Launcher NewLauncher() throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-		return NewLauncher(DefaultLauncher.class);
+	public static Launcher newLauncher() throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+		return newLauncher(DefaultLauncher.class);
 	}
 
 	/**
@@ -103,16 +103,16 @@ public class LuajClassLoader extends ClassLoader {
 	 * shared metatables, and should not be able to directly access variables
 	 * from other Launcher instances.
 	 *
-	 * @return instance of type 'launcher_class' that can be used to launch
+	 * @return instance of type 'launcherClass' that can be used to launch
 	 *         scripts.
 	 * @throws InstantiationException
 	 * @throws IllegalAccessException
 	 * @throws ClassNotFoundException
 	 */
-	public static Launcher NewLauncher(Class<? extends Launcher> launcher_class)
+	public static Launcher newLauncher(Class<? extends Launcher> launcherClass)
 		throws InstantiationException, IllegalAccessException, ClassNotFoundException {
 		final LuajClassLoader loader = new LuajClassLoader();
-		final Object instance = loader.loadAsUserClass(launcher_class.getName()).newInstance();
+		final Object instance = loader.loadAsUserClass(launcherClass.getName()).newInstance();
 		return (Launcher) instance;
 	}
 

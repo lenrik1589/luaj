@@ -21,17 +21,10 @@
 ******************************************************************************/
 package org.luaj.vm2.lib;
 
+import org.luaj.vm2.*;
+
 import java.io.IOException;
 import java.io.InputStream;
-
-import org.luaj.vm2.Globals;
-import org.luaj.vm2.Lua;
-import org.luaj.vm2.LuaError;
-import org.luaj.vm2.LuaString;
-import org.luaj.vm2.LuaTable;
-import org.luaj.vm2.LuaThread;
-import org.luaj.vm2.LuaValue;
-import org.luaj.vm2.Varargs;
 
 /**
  * Subclass of {@link LibFunction} which implements the lua basic library
@@ -105,30 +98,30 @@ public class BaseLib extends TwoArgFunction implements ResourceFinder {
 		globals.baselib = this;
 		env.set("_G", env);
 		env.set("_VERSION", Lua._VERSION);
-		env.set("assert", new _assert());
-		env.set("collectgarbage", new collectgarbage());
-		env.set("dofile", new dofile());
-		env.set("error", new error());
-		env.set("getmetatable", new getmetatable());
-		env.set("load", new load());
-		env.set("loadfile", new loadfile());
-		env.set("pcall", new pcall());
-		env.set("print", new print(this));
-		env.set("rawequal", new rawequal());
-		env.set("rawget", new rawget());
-		env.set("rawlen", new rawlen());
-		env.set("rawset", new rawset());
-		env.set("select", new select());
-		env.set("setmetatable", new setmetatable());
-		env.set("tonumber", new tonumber());
-		env.set("tostring", new tostring());
-		env.set("type", new type());
-		env.set("xpcall", new xpcall());
+		env.set("assert", new Assert());
+		env.set("collectgarbage", new CollectGarbage());
+		env.set("dofile", new DoFile());
+		env.set("error", new Error());
+		env.set("getmetatable", new GetMetatable());
+		env.set("load", new Load());
+		env.set("loadfile", new LoadFile());
+		env.set("pcall", new PCall());
+		env.set("print", new Print(this));
+		env.set("rawequal", new RawEqual());
+		env.set("rawget", new RawGet());
+		env.set("rawlen", new RawLen());
+		env.set("rawset", new RawSet());
+		env.set("select", new Select());
+		env.set("setmetatable", new SetMetatable());
+		env.set("tonumber", new ToNumber());
+		env.set("tostring", new ToString());
+		env.set("type", new Type());
+		env.set("xpcall", new XPCall());
 
-		next next;
-		env.set("next", next = new next());
-		env.set("pairs", new pairs(next));
-		env.set("ipairs", new ipairs());
+		Next next;
+		env.set("next", next = new Next());
+		env.set("pairs", new Pairs(next));
+		env.set("ipairs", new IPairs());
 
 		return env;
 	}
@@ -144,7 +137,7 @@ public class BaseLib extends TwoArgFunction implements ResourceFinder {
 	}
 
 	// "assert", // ( v [,message] ) -> v, message | ERR
-	static final class _assert extends VarArgFunction {
+	static final class Assert extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			if (!args.arg1().toboolean())
@@ -154,7 +147,7 @@ public class BaseLib extends TwoArgFunction implements ResourceFinder {
 	}
 
 	// "collectgarbage", // ( opt [,arg] ) -> value
-	static final class collectgarbage extends VarArgFunction {
+	static final class CollectGarbage extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			String s = args.optjstring(1, "collect");
@@ -176,7 +169,7 @@ public class BaseLib extends TwoArgFunction implements ResourceFinder {
 	}
 
 	// "dofile", // ( filename ) -> result1, ...
-	final class dofile extends VarArgFunction {
+	final class DoFile extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			args.argcheck(args.isstring(1) || args.isnil(1), 1, "filename must be string or nil");
@@ -188,7 +181,7 @@ public class BaseLib extends TwoArgFunction implements ResourceFinder {
 	}
 
 	// "error", // ( message [,level] ) -> ERR
-	static final class error extends TwoArgFunction {
+	static final class Error extends TwoArgFunction {
 		@Override
 		public LuaValue call(LuaValue arg1, LuaValue arg2) {
 			if (arg1.isnil())
@@ -200,7 +193,7 @@ public class BaseLib extends TwoArgFunction implements ResourceFinder {
 	}
 
 	// "getmetatable", // ( object ) -> table
-	static final class getmetatable extends LibFunction {
+	static final class GetMetatable extends LibFunction {
 		@Override
 		public LuaValue call() {
 			return argerror(1, "value expected");
@@ -214,7 +207,7 @@ public class BaseLib extends TwoArgFunction implements ResourceFinder {
 	}
 
 	// "load", // ( ld [, source [, mode [, env]]] ) -> chunk | nil, msg
-	final class load extends VarArgFunction {
+	final class Load extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			LuaValue ld = args.arg1();
@@ -231,7 +224,7 @@ public class BaseLib extends TwoArgFunction implements ResourceFinder {
 	}
 
 	// "loadfile", // ( [filename [, mode [, env]]] ) -> chunk | nil, msg
-	final class loadfile extends VarArgFunction {
+	final class LoadFile extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			args.argcheck(args.isstring(1) || args.isnil(1), 1, "filename must be string or nil");
@@ -243,7 +236,7 @@ public class BaseLib extends TwoArgFunction implements ResourceFinder {
 	}
 
 	// "pcall", // (f, arg1, ...) -> status, result1, ...
-	final class pcall extends VarArgFunction {
+	final class PCall extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			LuaValue func = args.checkvalue(1);
@@ -265,10 +258,10 @@ public class BaseLib extends TwoArgFunction implements ResourceFinder {
 	}
 
 	// "print", // (...) -> void
-	final class print extends VarArgFunction {
+	final class Print extends VarArgFunction {
 		final BaseLib baselib;
 
-		print(BaseLib baselib) {
+		Print(BaseLib baselib) {
 			this.baselib = baselib;
 		}
 
@@ -287,7 +280,7 @@ public class BaseLib extends TwoArgFunction implements ResourceFinder {
 	}
 
 	// "rawequal", // (v1, v2) -> boolean
-	static final class rawequal extends LibFunction {
+	static final class RawEqual extends LibFunction {
 		@Override
 		public LuaValue call() {
 			return argerror(1, "value expected");
@@ -305,7 +298,7 @@ public class BaseLib extends TwoArgFunction implements ResourceFinder {
 	}
 
 	// "rawget", // (table, index) -> value
-	static final class rawget extends TableLibFunction {
+	static final class RawGet extends TableLibFunction {
 		@Override
 		public LuaValue call(LuaValue arg) {
 			return argerror(2, "value expected");
@@ -318,7 +311,7 @@ public class BaseLib extends TwoArgFunction implements ResourceFinder {
 	}
 
 	// "rawlen", // (v) -> value
-	static final class rawlen extends LibFunction {
+	static final class RawLen extends LibFunction {
 		@Override
 		public LuaValue call(LuaValue arg) {
 			return valueOf(arg.rawlen());
@@ -326,7 +319,7 @@ public class BaseLib extends TwoArgFunction implements ResourceFinder {
 	}
 
 	// "rawset", // (table, index, value) -> table
-	static final class rawset extends TableLibFunction {
+	static final class RawSet extends TableLibFunction {
 		@Override
 		public LuaValue call(LuaValue table) {
 			return argerror(2, "value expected");
@@ -348,7 +341,7 @@ public class BaseLib extends TwoArgFunction implements ResourceFinder {
 	}
 
 	// "select", // (f, ...) -> value1, ...
-	static final class select extends VarArgFunction {
+	static final class Select extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			int n = args.narg()-1;
@@ -362,7 +355,7 @@ public class BaseLib extends TwoArgFunction implements ResourceFinder {
 	}
 
 	// "setmetatable", // (table, metatable) -> table
-	static final class setmetatable extends TableLibFunction {
+	static final class SetMetatable extends TableLibFunction {
 		@Override
 		public LuaValue call(LuaValue table) {
 			return argerror(2, "nil or table expected");
@@ -378,7 +371,7 @@ public class BaseLib extends TwoArgFunction implements ResourceFinder {
 	}
 
 	// "tonumber", // (e [,base]) -> value
-	static final class tonumber extends LibFunction {
+	static final class ToNumber extends LibFunction {
 		@Override
 		public LuaValue call(LuaValue e) {
 			return e.tonumber();
@@ -396,7 +389,7 @@ public class BaseLib extends TwoArgFunction implements ResourceFinder {
 	}
 
 	// "tostring", // (e) -> value
-	static final class tostring extends LibFunction {
+	static final class ToString extends LibFunction {
 		@Override
 		public LuaValue call(LuaValue arg) {
 			LuaValue h = arg.metatag(TOSTRING);
@@ -410,7 +403,7 @@ public class BaseLib extends TwoArgFunction implements ResourceFinder {
 	}
 
 	// "type",  // (v) -> value
-	static final class type extends LibFunction {
+	static final class Type extends LibFunction {
 		@Override
 		public LuaValue call(LuaValue arg) {
 			return valueOf(arg.typename());
@@ -418,7 +411,7 @@ public class BaseLib extends TwoArgFunction implements ResourceFinder {
 	}
 
 	// "xpcall", // (f, err) -> result1, ...
-	final class xpcall extends VarArgFunction {
+	final class XPCall extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			final LuaThread t = globals.running;
@@ -446,10 +439,10 @@ public class BaseLib extends TwoArgFunction implements ResourceFinder {
 	}
 
 	// "pairs" (t) -> iter-func, t, nil
-	static final class pairs extends VarArgFunction {
-		final next next;
+	static final class Pairs extends VarArgFunction {
+		final Next next;
 
-		pairs(next next) {
+		Pairs(Next next) {
 			this.next = next;
 		}
 
@@ -460,8 +453,8 @@ public class BaseLib extends TwoArgFunction implements ResourceFinder {
 	}
 
 	// // "ipairs", // (t) -> iter-func, t, 0
-	static final class ipairs extends VarArgFunction {
-		inext inext = new inext();
+	static final class IPairs extends VarArgFunction {
+		INext inext = new INext();
 
 		@Override
 		public Varargs invoke(Varargs args) {
@@ -470,7 +463,7 @@ public class BaseLib extends TwoArgFunction implements ResourceFinder {
 	}
 
 	// "next"  ( table, [index] ) -> next-index, next-value
-	static final class next extends VarArgFunction {
+	static final class Next extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			return args.checktable(1).next(args.arg(2));
@@ -478,7 +471,7 @@ public class BaseLib extends TwoArgFunction implements ResourceFinder {
 	}
 
 	// "inext" ( table, [int-index] ) -> next-index, next-value
-	static final class inext extends VarArgFunction {
+	static final class INext extends VarArgFunction {
 		@Override
 		public Varargs invoke(Varargs args) {
 			return args.checktable(1).inext(args.arg(2));

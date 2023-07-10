@@ -21,20 +21,14 @@
 ******************************************************************************/
 package org.luaj.vm2.lib.jse;
 
-import java.io.BufferedInputStream;
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintStream;
-import java.io.RandomAccessFile;
-
 import org.luaj.vm2.Globals;
 import org.luaj.vm2.LuaError;
 import org.luaj.vm2.LuaString;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.IoLib;
 import org.luaj.vm2.lib.LibFunction;
+
+import java.io.*;
 
 /**
  * Subclass of {@link IoLib} and therefore {@link LibFunction} which implements

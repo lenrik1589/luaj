@@ -2547,7 +2547,7 @@ abstract public class LuaValue extends Varargs {
 	 * @see #raweq(LuaValue)
 	 * @see #EQ
 	 */
-	public static final boolean eqmtcall(LuaValue lhs, LuaValue lhsmt, LuaValue rhs, LuaValue rhsmt) {
+	public static boolean eqmtcall(LuaValue lhs, LuaValue lhsmt, LuaValue rhs, LuaValue rhsmt) {
 		LuaValue h = lhsmt.rawget(EQ);
 		return h.isnil() || h != rhsmt.rawget(EQ)? false: h.call(lhs, rhs).toboolean();
 	}
@@ -4022,10 +4022,10 @@ abstract public class LuaValue extends Varargs {
 		case 0:
 			return more;
 		case 1:
-			return more.narg() > 0? (Varargs) new Varargs.PairVarargs(v[offset], more): (Varargs) v[offset];
+			return more.narg() > 0? new PairVarargs(v[offset], more) : v[offset];
 		case 2:
-			return more.narg() > 0? (Varargs) new Varargs.ArrayPartVarargs(v, offset, length, more)
-				: (Varargs) new Varargs.PairVarargs(v[offset], v[offset+1]);
+			return more.narg() > 0? new ArrayPartVarargs(v, offset, length, more)
+				: new PairVarargs(v[offset], v[offset+1]);
 		default:
 			return new Varargs.ArrayPartVarargs(v, offset, length, more);
 		}

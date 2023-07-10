@@ -21,14 +21,14 @@
 ******************************************************************************/
 package org.luaj.vm2.lib.jse;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.luaj.vm2.Globals;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.Varargs;
 import org.luaj.vm2.lib.LibFunction;
 import org.luaj.vm2.lib.OsLib;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Subclass of {@link LibFunction} which implements the standard lua {@code os}

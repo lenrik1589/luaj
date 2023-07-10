@@ -21,10 +21,10 @@
 ******************************************************************************/
 package org.luaj.vm2.ast;
 
+import org.luaj.vm2.LuaString;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import org.luaj.vm2.LuaString;
 
 public class FuncArgs extends SyntaxElement {
 

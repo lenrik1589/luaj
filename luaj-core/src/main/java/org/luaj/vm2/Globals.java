@@ -21,16 +21,12 @@
  ******************************************************************************/
 package org.luaj.vm2;
 
+import org.luaj.vm2.lib.*;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.Reader;
-
-import org.luaj.vm2.lib.BaseLib;
-import org.luaj.vm2.lib.DebugLib;
-import org.luaj.vm2.lib.IoLib;
-import org.luaj.vm2.lib.PackageLib;
-import org.luaj.vm2.lib.ResourceFinder;
 
 /**
  * Global environment used by luaj. Contains global variables referenced by

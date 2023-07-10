@@ -21,17 +21,13 @@
 ******************************************************************************/
 package org.luaj.vm2.luajc;
 
+import org.luaj.vm2.*;
+import org.luaj.vm2.compiler.LuaC;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.Hashtable;
-
-import org.luaj.vm2.Globals;
-import org.luaj.vm2.LuaClosure;
-import org.luaj.vm2.LuaFunction;
-import org.luaj.vm2.LuaValue;
-import org.luaj.vm2.Prototype;
-import org.luaj.vm2.compiler.LuaC;
 
 /**
  * Implementation of {@link org.luaj.vm2.Globals.Compiler} which does direct

@@ -21,9 +21,9 @@
  ******************************************************************************/
 package org.luaj.vm2.lib;
 
-import java.io.InputStream;
-
 import org.luaj.vm2.Globals;
+
+import java.io.InputStream;
 
 /**
  * Interface for opening application resource files such as scripts sources.
