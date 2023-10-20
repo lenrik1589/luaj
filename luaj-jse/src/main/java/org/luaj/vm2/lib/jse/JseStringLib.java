@@ -31,7 +31,7 @@ public class JseStringLib extends org.luaj.vm2.lib.StringLib {
 	protected String format(String src, double x) {
 		String out;
 		try {
-			out = String.format(src, Double.valueOf(x));
+			out = String.format(src, x);
 		} catch (Throwable e) {
 			out = super.format(src, x);
 		}

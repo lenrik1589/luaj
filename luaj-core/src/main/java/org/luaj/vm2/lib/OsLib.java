@@ -390,7 +390,7 @@ public class OsLib extends TwoArgFunction {
 	 * Calls the C function exit, with an optional code, to terminate the host
 	 * program.
 	 *
-	 * @param code
+	 * @param code exit code of the program
 	 */
 	protected void exit(int code) {
 		System.exit(code);
@@ -410,7 +410,7 @@ public class OsLib extends TwoArgFunction {
 	 *
 	 * A SecurityException may be thrown if access is not allowed for 'varname'.
 	 *
-	 * @param varname
+	 * @param varname name of the environment property
 	 * @return String value, or null if not defined
 	 */
 	protected String getenv(String varname) {
@@ -441,20 +441,21 @@ public class OsLib extends TwoArgFunction {
 	}
 
 	/**
-	 * Sets the current locale of the program. locale is a string specifying a
-	 * locale; category is an optional string describing which category to
-	 * change: "all", "collate", "ctype", "monetary", "numeric", or "time"; the
-	 * default category is "all".
+	 * Sets the current locale of the program. <code>locale</code> is a string specifying a
+	 * locale; category is an optional string describing which category to change:
+	 * <code>"all"</code>, <code>"collate"</code>, <code>"ctype"</code>, <code>"monetary"</code>,
+	 * <code>"numeric"</code>, or <code>"time"</code>;
+	 * the default category is <code>"all"</code>.
 	 *
-	 * If locale is the empty string, the current locale is set to an
-	 * implementation- defined native locale. If locale is the string "C", the
-	 * current locale is set to the standard C locale.
+	 * If locale is the empty string, the current locale is set to an implementation-defined
+	 * native locale. If locale is the string <code>"C"</code>, the current locale is set to
+	 * the standard C locale.
 	 *
-	 * When called with null as the first argument, this function only returns
-	 * the name of the current locale for the given category.
+	 * When called with null as the first argument, this function only returns the name of the
+	 * current locale for the given category.
 	 *
-	 * @param locale
-	 * @param category
+	 * @param locale   
+	 * @param category category of the locale to modify
 	 * @return the name of the new locale, or null if the request cannot be
 	 *         honored.
 	 */

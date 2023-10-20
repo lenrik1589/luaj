@@ -63,40 +63,44 @@ public class JavaBuilder {
 
 		Types(String className){
 			this.name = className;
+			this.basic = null;
 			this.object = new ObjectType(name);
 			this.array = new ArrayType(object, 1);
-			this.basic = null;
 		}
 
 		Types(BasicType type) {
 			this.name = type.getSignature();
 			this.basic = type;
-			this.array = new ArrayType(type, 1);
 			this.object = null;
+			this.array = new ArrayType(type, 1);
+		}
+		
+		Type type () {
+			return basic == null? object : basic;
 		}
 	}
 
 	// argument list types
 	private enum ArgTypes {
 		NONE                  (new Type[]{ }                                                                    , new String[]{ }),
-		INT                   (new Type[]{ Types.INT.basic }                                                    , new String[]{ "i" }),
-		DOUBLE                (new Type[]{ Types.DOUBLE.basic }                                                 , new String[]{ "d" }),
-		STRING                (new Type[]{ Types.STRING.basic }                                                 , new String[]{ "s" }),
+		INT                   (new Type[]{ Types.INT.type() }                                                   , new String[]{ "i" }),
+		DOUBLE                (new Type[]{ Types.DOUBLE.type() }                                                , new String[]{ "d" }),
+		STRING                (new Type[]{ Types.STRING.type() }                                                , new String[]{ "s" }),
 		CHARARRAY             (new Type[]{ Types.CHAR.array }                                                   , new String[]{ "chars" }),
-		BUFFER                (new Type[]{ Types.BUFFER.object }                                                , new String[]{ "buffer" }),
+		BUFFER                (new Type[]{ Types.BUFFER.type() }                                                , new String[]{ "buffer" }),
 		STRINGARRAY           (new Type[]{ Types.STRING.array }                                                 , new String[]{ "strings" }),
-		LUAVALUE_STRINGARRAY  (new Type[]{ Types.LUAVALUE.object, Types.STRING.array }                          , new String[]{ "arg", "strings" }),
-		VARARGS               (new Type[]{ Types.VARARGS.object }                                               , new String[]{ "args" }),
-		LUAVALUE              (new Type[]{ Types.LUAVALUE.object }                                              , new String[]{ "arg" }),
-		LUAVALUE_VARARGS      (new Type[]{ Types.LUAVALUE.object, Types.VARARGS.object }                        , new String[]{ "arg1", "args"}),
-		LUAVALUE_2            (new Type[]{ Types.LUAVALUE.object, Types.LUAVALUE.object }                       , new String[]{ "arg1", "arg2" }),
-		LUAVALUE_2_VARARGS    (new Type[]{ Types.LUAVALUE.object, Types.LUAVALUE.object, Types.VARARGS.object } , new String[]{ "arg1", "arg2", "args" }),
-		LUAVALUE_3            (new Type[]{ Types.LUAVALUE.object, Types.LUAVALUE.object, Types.LUAVALUE.object }, new String[]{ "arg1", "arg2", "arg3" }),
+		LUAVALUE_STRINGARRAY  (new Type[]{ Types.LUAVALUE.type(), Types.STRING.array }                          , new String[]{ "arg", "strings" }),
+		VARARGS               (new Type[]{ Types.VARARGS.type() }                                               , new String[]{ "args" }),
+		LUAVALUE              (new Type[]{ Types.LUAVALUE.type() }                                              , new String[]{ "arg" }),
+		LUAVALUE_VARARGS      (new Type[]{ Types.LUAVALUE.type(), Types.VARARGS.type() }                        , new String[]{ "arg1", "args"}),
+		LUAVALUE_2            (new Type[]{ Types.LUAVALUE.type(), Types.LUAVALUE.type() }                       , new String[]{ "arg1", "arg2" }),
+		LUAVALUE_2_VARARGS    (new Type[]{ Types.LUAVALUE.type(), Types.LUAVALUE.type(), Types.VARARGS.type() } , new String[]{ "arg1", "arg2", "args" }),
+		LUAVALUE_3            (new Type[]{ Types.LUAVALUE.type(), Types.LUAVALUE.type(), Types.LUAVALUE.type() }, new String[]{ "arg1", "arg2", "arg3" }),
 		LUAVALUEARRAY         (new Type[]{ Types.LUAVALUE.array }                                               , new String[]{ "values" }),
-		LUAVALUEARRAY_VARARGS (new Type[]{ Types.LUAVALUE.array, Types.VARARGS.object }                         , new String[]{ "values", "args" }),
-		INT_LUAVALUE          (new Type[]{ Type.INT, Types.LUAVALUE.object }                                    , new String[]{ "i", "arg" }),
-		INT_VARARGS           (new Type[]{ Type.INT, Types.VARARGS.object }                                     , new String[]{ "i", "args" }),
-		INT_INT               (new Type[]{ Type.INT, Type.INT }                                                 , new String[]{ "i", "j" }),
+		LUAVALUEARRAY_VARARGS (new Type[]{ Types.LUAVALUE.array, Types.VARARGS.type() }                         , new String[]{ "values", "args" }),
+		INT_LUAVALUE          (new Type[]{ Types.INT.type(), Types.LUAVALUE.type() }                            , new String[]{ "i", "arg" }),
+		INT_VARARGS           (new Type[]{ Types.INT.type(), Types.VARARGS.type() }                             , new String[]{ "i", "args" }),
+		INT_INT               (new Type[]{ Types.INT.type(), Types.INT.type() }                                 , new String[]{ "i", "j" }),
 		;
 		private final Type[] types;
 		private final String[] defaultNames;
